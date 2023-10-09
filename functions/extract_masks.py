@@ -1,0 +1,42 @@
+import numpy as np
+
+from segment_anything import SamAutomaticMaskGenerator, sam_model_registry
+from config import device, dev, MIN_MASK_REGION_AREA
+
+if dev:
+    sam_checkpoint = "sam_vit_b_01ec64.pth"
+    model_type = "vit_b"
+else:
+    sam_checkpoint = "sam_vit_l_0b3195.pth"
+    model_type = "vit_l"
+
+sam = sam_model_registry[model_type](checkpoint=sam_checkpoint)
+sam.to(device=device)
+mask_generator = SamAutomaticMaskGenerator(
+    sam,
+    min_mask_region_area=MIN_MASK_REGION_AREA, points_per_side=32 if not dev else 8,
+    crop_n_layers=2 if not dev else 0,
+    crop_n_points_downscale_factor=2 if not dev else 1
+    )
+
+def extract_masks_single(image):
+    """Computes SAM masks for a given image,
+    returns a list of dicts"""
+    assert len(image.shape) == 3
+    assert image.shape[2] == 3
+    assert image.dtype == np.uint8
+    masks = mask_generator.generate(image)
+    masks = remove_small_masks(masks, MIN_MASK_REGION_AREA) 
+    return masks
+
+def remove_small_masks(masks, min_mask_region_area):
+    """Removes masks with area less than min_mask_region_area"""
+    return [mask for mask in masks if mask['area'] >= min_mask_region_area]
+
+def extract_masks_list(images):
+    """Computes SAM masks for a list of images,
+    returns a list of lists of dicts"""
+    masks_per_frame = []
+    for image in images:
+        masks_per_frame.append(extract_masks_single(image))
+    return masks_per_frame
