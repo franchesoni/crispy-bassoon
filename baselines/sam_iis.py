@@ -310,10 +310,10 @@ def annotate_stack(
             f.write(str(metrics).replace("'", '"'))
 
 
-def run_experiment(load_sample_fn, n_images, dev, max_clicks, runname, device):
+def run_experiment(load_sample_fn, n_images, dev, max_clicks_per_image, runname, device):
     assert n_images > 0 and n_images <= 50, "n_images must be between 1 and 50"
     N = n_images
-    MAX_CLICKS = max_clicks
+    MAX_CLICKS = max_clicks_per_image
 
     noplt = False
     dstdir = f"runs/{runname}"
