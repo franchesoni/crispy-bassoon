@@ -37,6 +37,7 @@ def extract_masks_list(images):
     """Computes SAM masks for a list of images,
     returns a list of lists of dicts"""
     masks_per_frame = []
-    for image in images:
+    for imgind, image in enumerate(images):
+        print(f'extracting masks for image {imgind+1} of {len(images)}', end='\r')
         masks_per_frame.append(extract_masks_single(image))
     return masks_per_frame
