@@ -20,7 +20,7 @@ def classify(masks_feat_per_image, clicks):
     denom = alphas.sum(dim=1) + 1e-15  # (N,)
     logits = (alphas * (2 * ann_is_pos[None] - 1) ).sum(axis=1) / denom.squeeze()  # (N,), convert labels to -1, 1
     labels = 2 * (logits > 0) - 1
-    return labels
+    return labels.cpu().numpy()
 
 
 
