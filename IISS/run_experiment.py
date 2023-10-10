@@ -46,7 +46,6 @@ def get_clicked_segment(pred_masks, dinosam_masks, gt_masks):  # optimize for ac
 
 
 def run_experiment(load_sample_fn, n_images, max_total_clicks, runname):
-    MAX_CLICKS = max_total_clicks // n_images
     N = n_images
     noplt = False
     dstdir = f'runs/{runname}'
@@ -105,10 +104,9 @@ def run_experiment(load_sample_fn, n_images, max_total_clicks, runname):
     # start loop
     pred_masks = [np.zeros_like(mask) for mask in gt_masks]  # init at 0
     clicks, metrics = [], [compute_global_metrics(*compute_tps_fps_tns_fns(pred_masks, gt_masks))]
-    (dstdir / 'preds').mkdir()
     
-    for ind in range(MAX_CLICKS * N):
-        print('click', ind+1, 'of', MAX_CLICKS * N)
+    for ind in range(max_total_clicks):
+        print('click', ind+1, 'of', max_total_clicks)
         clicked_segment = get_clicked_segment(pred_masks, sam_masks_per_frame, gt_masks)  # click the mask that reduces the error the most, (frame, mask_index, label)
         print(clicked_segment)
         clicks.append(clicked_segment)
@@ -119,14 +117,41 @@ def run_experiment(load_sample_fn, n_images, max_total_clicks, runname):
         pred_masks = create_segmentation(sam_masks_per_frame, labels, clicks)
 
         if not noplt:
+            (dstdir / 'preds').mkdir(exist_ok=True)
+            (dstdir / 'errmaps').mkdir(exist_ok=True)
             for frame_ind, frame_masks in enumerate(sam_masks_per_frame):
                 if frame_ind == 8:
                     break
                 plt.imsave(dstdir / 'preds' / f'pred_{str(ind+1).zfill(3)}_{str(frame_ind).zfill(2)}.png', pred_masks[frame_ind]*1, vmin=0, vmax=1)
+
+                imgs_to_show = [
+                    [
+                        np.clip(
+                            pm[..., None] * [0, 1.0, 1.0] + gt[..., None] * [1.0, 0, 0], 0, 1
+                        )
+                        for pm, gt in zip(pred_masks, gt_masks)
+                    ]
+                ]
+                names = ["mask_diff"]
+                # visualize everything
+                for i, img in enumerate(imgs_to_show):
+                    for j, im in enumerate(img):
+                        if im is None:
+                            continue
+                        plt.imsave(
+                            dstdir / 'errmaps' / f"click{str(ind+1).zfill(2)}_{names[i]}_{str(j).zfill(2)}.png",
+                            im,
+                        )
+                        plt.close()
+
+
+
 
 
         metdict = compute_global_metrics(*compute_tps_fps_tns_fns(pred_masks, gt_masks))
         metrics.append(metdict)
         with open(f'{dstdir}/metrics.json', 'w') as f:
             f.write(str(metrics).replace("'", '"'))
+    with open(dstdir / f'clicks.json', 'w') as f:
+        f.write(str([list(c) for c in clicks]).replace("'", '"'))
 
