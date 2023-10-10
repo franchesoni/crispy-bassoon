@@ -5,8 +5,7 @@ from torchvision import transforms
 from config import dev, DINO_RESIZE, DINO_PATCH_SIZE
 
 
-def get_dino(dev):
-    dino_size = 'small' if dev else 'base'
+def get_dino(dino_size = 'small'):
     if dino_size == 'small':
         dinov2_vits14 = torch.hub.load('facebookresearch/dinov2', 'dinov2_vits14')
         dino = dinov2_vits14  # small dino
@@ -17,7 +16,7 @@ def get_dino(dev):
         raise ValueError(f'Unknown dino size: {dino_size}')
     return dino
 
-dino = get_dino(dev)
+dino = get_dino()
 dino.eval()
 
 def compute_features_list(images):
@@ -40,11 +39,10 @@ def compute_features_list(images):
 
 
 def preprocess_image_array(image_array, target_size):
-    assert image_array.dtype == float
+    assert image_array.dtype == np.uint8
     assert len(image_array.shape) == 3
     assert image_array.shape[2] == 3
-    assert image_array.max() <= 1.0
-    assert image_array.min() >= 0.0
+    assert image_array.max() > 1
     # Step 1: Normalize using mean and std of ImageNet dataset
     mean = np.array([0.485, 0.456, 0.406])
     std = np.array([0.229, 0.224, 0.225])
