@@ -228,6 +228,21 @@ def annotate_stack(
         compute_global_metrics(*compute_tps_fps_tns_fns(pred_masks, gt_masks))
     ]
 
+    if not noplt:
+        err_masks = [
+            np.clip(
+                pm[..., None] * [0, 1.0, 1.0] + gt[..., None] * [1.0, 0, 0], 0, 1
+            )
+            for pm, gt in zip(pred_masks, gt_masks)
+        ]
+        for j, im in enumerate(err_masks):
+            plt.imsave(
+                f"{dstdir}/click{str(0).zfill(2)}_mask_diff_{str(j).zfill(2)}.png",
+                im,
+            )
+ 
+
+
     for click_number in range(max_clicks):
         imgs_to_show = []
         names = []
@@ -274,7 +289,7 @@ def annotate_stack(
                     if im is None:
                         continue
                     plt.imsave(
-                        f"{dstdir}/click{str(click_number).zfill(2)}_{names[i]}_{str(j).zfill(2)}.png",
+                        f"{dstdir}/click{str(click_number+1).zfill(2)}_{names[i]}_{str(j).zfill(2)}.png",
                         im,
                     )
                     plt.close()
@@ -299,7 +314,7 @@ def annotate_stack(
                         )
                         # print([click.label for click in clicks_of_type_and_frame])
                 plt.savefig(
-                    f"{dstdir}/click{str(click_number).zfill(2)}_clicks_{str(i).zfill(2)}.png"
+                    f"{dstdir}/click{str(click_number+1).zfill(2)}_clicks_{str(i).zfill(2)}.png"
                 )
                 plt.close()
 
@@ -308,6 +323,8 @@ def annotate_stack(
         metrics.append(metdict)
         with open(f"{dstdir}/metrics.json", "w") as f:
             f.write(str(metrics).replace("'", '"'))
+    with open(f"{dstdir}/clicks.json", "w") as f:
+        f.write(str([list(c.tuple) for c in clicks]).replace("'", '"'))
 
 
 def run_experiment(load_sample_fn, n_images, dev, max_clicks_per_image, runname, device):
