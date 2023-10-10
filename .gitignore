@@ -1,2 +1,6 @@
 env_*/
 *.pth
+__pycache__/
+.vscode/
+runs/
+*.npy

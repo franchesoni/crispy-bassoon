@@ -1,7 +1,7 @@
 device = 'cpu'
 
 MIN_MASK_REGION_AREA = 100  # SAM's default, do not change
-dev = True
+dev = False
 # dev for SAM is 8x8, vit_b, and one layer
 
 # DINO config
