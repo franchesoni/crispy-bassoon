@@ -19,3 +19,6 @@ wget https://dl.fbaipublicfiles.com/segment_anything/sam_vit_l_0b3195.pth
 - `config.py`: global configuration options
 - `metrics.py`: classification metrics, acc and IoU both for individual images and stacks.
 
+
+# Datasets
+ADE20k following https://github.com/CSAILVision/placeschallenge/tree/master/instancesegmentation
