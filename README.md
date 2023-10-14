@@ -22,3 +22,4 @@ wget https://dl.fbaipublicfiles.com/segment_anything/sam_vit_l_0b3195.pth
 
 # Datasets
 ADE20k following https://github.com/CSAILVision/placeschallenge/tree/master/instancesegmentation
+PASCAL VOC (use torchvision datasets)
