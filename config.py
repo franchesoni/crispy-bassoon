@@ -1,4 +1,6 @@
-device = 'cpu'
+device = 'cuda'
+from pathlib import Path
+datasets_path = Path('/home/franchesoni/adisk')
 
 MIN_MASK_REGION_AREA = 100  # SAM's default, do not change
 dev = False
