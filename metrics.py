@@ -37,13 +37,20 @@ def compute_global_metrics(tps, fps, tns, fns):
   jacc = (gtps) / (gtps + gfps + gfns)  # jaccard index
   return {'acc': acc, 'jacc': jacc, 'avg_acc': avg_acc, 'avg_jacc': avg_jacc, 'tps': tps, 'fps': fps, 'tns': tns, 'fns': fns}
 
-def aggregate_metrics(per_image_res, clicks_per_image):  # we add a [0] because of how we saved the data
+def aggregate_metrics(per_image_res, clicks_per_image=None):  # we add a [0] because of how we saved the data
+  if clicks_per_image is None:
+    tps = [res['tps'][0] for res in per_image_res]
+    fps = [res['fps'][0] for res in per_image_res]
+    tns = [res['tns'][0] for res in per_image_res]
+    fns = [res['fns'][0] for res in per_image_res]
+  else:
     tps = [res[clicks_per_image[ind]]['tps'][0] for ind, res in enumerate(per_image_res)]
     fps = [res[clicks_per_image[ind]]['fps'][0] for ind, res in enumerate(per_image_res)]
     tns = [res[clicks_per_image[ind]]['tns'][0] for ind, res in enumerate(per_image_res)]
     fns = [res[clicks_per_image[ind]]['fns'][0] for ind, res in enumerate(per_image_res)]
-    metrics = compute_global_metrics(tps, fps, tns, fns)
-    return metrics
+  metrics = compute_global_metrics(tps, fps, tns, fns)
+  return metrics
+
 
 def get_global_click_metrics_from_iis(iis_run_path, max_clicks):
     datapath = Path(iis_run_path) 
