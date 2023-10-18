@@ -12,7 +12,7 @@ import matplotlib.pyplot as plt
 
 from IISS.extract_masks import extract_masks_single
 from IISS.compute_features import compute_features_list
-from IISS.project_masks import project_masks
+from IISS.project_masks import project_masks, get_complement
 from IISS.classify import classify, clean_clicks
 from IISS.create_segmentation import create_segmentation
 
@@ -55,7 +55,7 @@ def get_training_metrics(load_ind_img_mask_fn, precomputed_dir, n_images, runnam
     precomputed_dir = Path(precomputed_dir)
     ndigits_pre = len(os.listdir(precomputed_dir)[0].split('_')[2].split('.')[0])
     # load global clicks
-    global_clicks_path = Path('runs') / runname / 'global_clicks.json'
+    global_clicks_path = Path(runname) / 'global_clicks.json'
     with open(global_clicks_path, 'r') as f:
         content = f.read()
     global_clicks = ast.literal_eval(content)
@@ -86,7 +86,7 @@ def get_training_metrics(load_ind_img_mask_fn, precomputed_dir, n_images, runnam
             metrics_vs_j.append(metdict)
         metrics_vs_t.append(metrics_vs_j)
     # save metrics vs t at runs / runname
-    with open(Path('runs') / runname / 'metrics_vs_t.json', 'w') as f:
+    with open(Path(runname) / 'metrics_vs_t.json', 'w') as f:
         f.write(str(metrics_vs_t).replace("'", '"'))
 
 
@@ -119,24 +119,44 @@ def precompute_for_dataset(ds_load_img_fn, ds_length, dstdir, reset=False):
             pr.dump_stats('precompute.prof')
             del pr
     
+def precompute_for_dataset_complements(ds_load_img_fn, ds_length, dstdir):
+    ndigits = len(str(ds_length))
+    dstdir = Path(dstdir)
+    if len(list(dstdir.glob("*complement*"))):
+        print('precomputed data already exists, returning...')
+        return
+    assert dstdir.exists()
+    print('precomputing complement masks...')
+
+    for i in tqdm.tqdm(range(ds_length)):
+        img = ds_load_img_fn(i)
+        sam_masks = np.load(dstdir / f'sam_masks_{str(i).zfill(ndigits)}.npy', allow_pickle=True)
+        complement_sam_masks = [get_complement(mask) for mask in sam_masks]
+        del sam_masks
+        img_features = compute_features_list([img])[0]
+        masks_feat = project_masks(complement_sam_masks, img_features)
+        np.save(dstdir / f'complement_sam_masks_{str(i).zfill(ndigits)}.npy', complement_sam_masks)
+        np.save(dstdir / f'complement_masks_feat_{str(i).zfill(ndigits)}.npy', masks_feat)
+ 
 
 
 
 
-
-def run_experiment(load_ind_img_mask_fn, precomputed_dir, n_images, max_total_clicks, stack_size=8, clicks_per_stack=4, runname='tmp', reset=False):
+def run_experiment(load_ind_img_mask_fn, precomputed_dir, n_images, max_total_clicks, stack_size=8, clicks_per_stack=4, runname='tmp', reset=False, single_mode=True):
     """Generic experiment function for all datasets. The data handling should be done in the construction of the load_sample_fn function, which takes an index and returns an image and a mask.
     The number of images sets the range in which load_sample_fn is called.
     
     The feature extraction should be done once only and is independent of the ground truth or target."""
+    if single_mode:
+        assert stack_size == 1
+        assert clicks_per_stack == 1
     precomputed_dir = Path(precomputed_dir)
     assert precomputed_dir.exists()
     ndigits_pre = len(os.listdir(precomputed_dir)[0].split('_')[2].split('.')[0])
     assert n_images % stack_size == 0, 'you should set a nice stack size for simplicity'  # else change the range in the for loop and also make sure the number of clicks on the last stack is correct
 
     ndigits = len(str(n_images))
-    dstdir = f'runs/{runname}'
-    dstdir = Path(dstdir)
+    dstdir = Path(runname)
     try:
         dstdir.mkdir(parents=True)
     except FileExistsError:
@@ -193,7 +213,7 @@ def run_experiment(load_ind_img_mask_fn, precomputed_dir, n_images, max_total_cl
                 print(f'sweep {sweeps} | stack {stack_ind+1}/{n_images // stack_size} | click {ind_in_stack+1}/{clicks_per_stack}', end = '\r')
                 clicked_segment = get_clicked_segment(pred_masks, sam_masks_per_frame, gt_masks)  # click the mask that reduces the error the most, (frame, mask_index, label)
                 if clicked_segment is None:
-                    break
+                    break  # no click improves the error
                 all_clicks_so_far.append((global_ds_indices_in_stack[clicked_segment[0]], clicked_segment[1], clicked_segment[2]))
                 seed_vectors.append(masks_feat_per_frame[clicked_segment[0]][clicked_segment[1]])
 
@@ -207,7 +227,9 @@ def run_experiment(load_ind_img_mask_fn, precomputed_dir, n_images, max_total_cl
 
                 stack_metdict = compute_global_metrics(*compute_tps_fps_tns_fns(pred_masks, gt_masks))
                 stack_metrics.append(stack_metdict)
-                with open(f'{dstdir}/metrics/sweep_{sweeps}_stack_{str(stack_ind).zfill(ndigits)}_metrics.json', 'w') as f:
+                assert sweeps == 0
+                metrics_dstfile = f'{dstdir}/metrics/sweep_{sweeps}_stack_{str(stack_ind).zfill(ndigits)}_metrics.json' if not single_mode else f'{dstdir}/metrics/image_{str(stack_ind).zfill(ndigits)}_metrics.json'
+                with open(metrics_dstfile, 'w') as f:
                     f.write(str(stack_metrics).replace("'", '"'))
             with open(dstdir / 'global_clicks.json', 'w') as f:
                 f.write(str([list(c) for c in all_clicks_so_far]).replace("'", '"'))

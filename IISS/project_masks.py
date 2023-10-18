@@ -1,4 +1,6 @@
 from skimage.transform import resize
+from copy import deepcopy
+import numpy as np
 """
 Here we assign a feature vector to each SAM mask.
 For each mask we compute the mean of the features of the pixels in the mask.
@@ -18,3 +20,10 @@ def project_masks(masks, feat):
     # compute the feature vector for each segmentation
     masks_feat = [(feat * rseg[..., None] / rseg.sum()).sum(dim=(0,1)) for rseg in rsegs]
     return masks_feat
+
+def get_complement(mask):
+    out = deepcopy(mask)
+    out['segmentation'] = np.logical_not(mask['segmentation'])
+    out['area'] = out['segmentation'].sum()
+    return out
+
