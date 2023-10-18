@@ -5,3 +5,7 @@ __pycache__/
 *runs/
 *.npy
 *.prof
+*.png
+*.jpg
+*.jpeg
+*.txt
