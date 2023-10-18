@@ -40,9 +40,7 @@ def oracle_SAM(load_ind_img_mask_fn, precomputed_dir, n_images, runname='tmp', r
     assert precomputed_dir.exists()
     ndigits_pre = len(os.listdir(precomputed_dir)[0].split('_')[2].split('.')[0])
 
-    ndigits = len(str(n_images))
-    dstdir = f'runs/{runname}'
-    dstdir = Path(dstdir)
+    dstdir = Path(runname)
     try:
         dstdir.mkdir(parents=True)
     except FileExistsError:
