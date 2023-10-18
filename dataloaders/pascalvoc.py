@@ -1,3 +1,4 @@
+from pathlib import Path
 import tqdm
 import functools
 import numpy as np
@@ -44,12 +45,17 @@ def load_img_only(index):
 def get_length_and_load_ind_img_mask_fn(class_name, only_pos, seed):
     assert class_name in classes.keys()
     class_ind = classes[class_name]
+
     if only_pos:
-        pos_indices = []
-        for i in tqdm.tqdm(range(len(ds))):
-            if np.sum(np.array(ds[i][1]) == class_ind) > 0:
-                pos_indices.append(i)
-        indices = pos_indices
+        if Path(f'dataloaders/cache/{class_ind}_{only_pos}.npy').exists():
+            indices = np.load(f'dataloaders/cache/{class_ind}_{only_pos}.npy')
+        else:
+            pos_indices = []
+            for i in tqdm.tqdm(range(len(ds))):
+                if np.sum(np.array(ds[i][1]) == class_ind) > 0:
+                    pos_indices.append(i)
+            indices = pos_indices
+            np.save(f'dataloaders/cache/{class_ind}_{only_pos}.npy', indices)
     else:
         indices = list(range(len(ds)))
     if not seed in [None, 0]:
