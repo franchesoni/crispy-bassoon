@@ -1,6 +1,8 @@
 from pathlib import Path
+import os
 import shutil
 from typing import Callable
+from ast import literal_eval
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -194,6 +196,10 @@ def robot_click_single(pred, gt):
     row, col = click_position(incorrect_region)
     return (row, col, click_cat)
 
+def robot_center_of_largest_single(pred, gt_mask):
+    incorrect_region, click_cat = get_largest_incorrect_region(pred, gt_mask)
+    row, col = click_position(incorrect_region)
+    return Click(0, row, col, click_cat)
 
 def robot_click_multiple(preds, masks):
     max_size_incorrect = -1
@@ -375,3 +381,145 @@ def run_experiment(load_sample_fn, n_images, dev, max_clicks_per_image, runname,
             noplt=noplt,
         )
 
+def run_main_plot_experiment(load_img_with_masks_as_batch_fn, n_images, dev, max_clicks_per_image, runname, device):
+    dstdir = Path(runname)
+    n_digits = len(str(n_images))
+    try:
+        dstdir.mkdir(parents=True)
+    except FileExistsError:
+        shutil.rmtree(dstdir)
+        dstdir.mkdir()
+        print("removed last run")
+
+    if dev:
+        sam_checkpoint = "sam_vit_b_01ec64.pth"
+        model_type = "vit_b"
+    else:
+        sam_checkpoint = "sam_vit_l_0b3195.pth"
+        model_type = "vit_l"
+
+    sam = sam_model_registry[model_type](checkpoint=sam_checkpoint)
+    sam.to(device=device)
+    sam_predictor = SamPredictor(sam)
+
+    for ind in range(n_images):
+        print(f"processing {ind+1}/{n_images}", end="\r")
+        _, img, gt_masks = load_img_with_masks_as_batch_fn(ind)
+        subdstdir = dstdir / f"img{str(ind).zfill(n_digits)}"
+        Path(subdstdir).mkdir()
+        embeddings = get_embeddings_sam(sam_predictor, [img])
+        for maskind, gt_mask in enumerate(gt_masks):
+            if gt_mask is None:
+                continue
+            subdstdirmask = subdstdir / f"class{str(maskind).zfill(2)}"
+            subdstdirmask.mkdir()
+            annotate_stack(
+                images=[img],
+                gt_masks=[gt_mask],
+                iis_predictor=sam_predictor,
+                embeddings=embeddings,
+                robot_clicker=robot_click_multiple,
+                propagate_fn=propagate_dummy,
+                propagator_state={},
+                dstdir=subdstdirmask,
+                max_clicks=max_clicks_per_image,
+                noplt=False,
+            )
+
+
+def get_curves_for_main_plot(runname, max_total_clicks, stack_size, clicks_per_stack, class_number):
+    runname = Path(runname)
+    assert Path(runname).exists()
+    # for each class, we need to compute the curve
+    # we need to aggrupate in stacks
+    # make some clicks per stack
+    # and continue until we get to max_total_clicks
+    imgs_dirs = sorted(os.listdir(runname))
+    sweep = 0
+    n_clicks_so_far = 0
+    while n_clicks_so_far < max_total_clicks:  # sweep
+        stack_starts_at = 0
+        while stack_starts_at < len(imgs_dirs) - stack_size:
+            offset = 0
+            stack = []
+            # go through the images finding the subdirs call `classXX` that correspond to the class
+            while len(stack) < stack_size:
+                imgdir = imgs_dirs[stack_starts_at + offset]
+                if (runname / imgdir / f"class{str(class_number).zfill(2)}").exists():
+                    stack.append(imgdir)
+                offset += 1
+            print('created stack!')
+            # get metrics in stack
+            metrics_in_stack = []
+            for imgdir in stack:
+                with open(runname / imgdir / f"class{str(class_number).zfill(2)}" / 'metrics.json', 'r') as f:
+                    metrics = literal_eval(f.read())
+                    metrics_in_stack.append(metrics)
+            print('got metrics in stack!')
+            # now get the curve for the stack
+            best_curve_metrics = get_best_iis_curve(metrics_in_stack, max_clicks=clicks_per_stack)
+            print('got curve for stack!')
+
+            stack_starts_at += stack_size
+            print('well done!')
+        sweep += 1
+
+from metrics import aggregate_metrics
+def get_best_iis_curve(metrics_in_stack, total_clicks=None):
+    '''metrics_in_stack is a list of lists of metrics corresponding to the frame ind and the click ind respectively'''
+    n_frames = len(metrics_in_stack)  # e.g. 16
+    max_clicks = n_frames * len(metrics_in_stack[0])-1 if total_clicks is None else total_clicks  # e.g. 4
+
+    clicks_per_image = [0 for _ in range(n_frames)]  # e.g. [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+    metrics = [aggregate_metrics(metrics_in_stack, clicks_per_image)]
+    for click_n in range(n_frames * max_clicks):
+        print(f'finding click {click_n+1} of {n_frames*max_clicks}', end='\r')
+        best_global_iou = -np.inf  #metrics[-1]['jacc']
+        for ind in range(n_frames):  # try clicks on all the images 
+            if clicks_per_image[ind] == max_clicks:
+                continue  # already maxed out clicks on this image
+            # else try to click on this image
+            hypothetical_clicks_per_image = clicks_per_image.copy()
+            hypothetical_clicks_per_image[ind] += 1
+            hypothetical_metrics = aggregate_metrics(metrics_in_stack, hypothetical_clicks_per_image)
+            if hypothetical_metrics['jacc'] > best_global_iou:
+                best_global_iou = hypothetical_metrics['jacc']
+                best_ind = ind
+        if best_global_iou == -np.inf:
+            break  # no click can be placed, exit
+        clicks_per_image[best_ind] += 1
+        metrics.append(aggregate_metrics(metrics_in_stack, clicks_per_image))
+    return metrics
+
+
+
+
+def get_curves_for_main_plot_oneimageatatime(runname, ds_length, max_total_clicks, class_number, seed, load_ind_img_mask_fn):
+    """Simply load the results in the order given by the loading function and repeat if needed."""
+    runname = Path(runname)
+    assert Path(runname).exists()
+    class_index = class_number - 1  # rm background as class
+    # get all curves (one per image)
+    all_metrics = []  
+    for click_n in range(ds_length):
+        current_ind, _, _ = load_ind_img_mask_fn(click_n)
+        with open(runname / f"img{str(current_ind).zfill(4)}" / f"class{str(class_index).zfill(2)}" / 'metrics.json', 'r') as f:
+            metrics = literal_eval(f.read())
+        all_metrics.append(metrics)
+
+    # compute initial metrics
+    curve = [aggregate_metrics(all_metrics, [0 for _ in range(ds_length)])]  
+    # make clicks
+    for click_n in range(max_total_clicks):
+        sweep = click_n // ds_length
+        ds_ind = click_n % ds_length
+        new_agg = aggregate_metrics(all_metrics, [sweep+1 for _ in range(ds_ind+1)] + [sweep for _ in range(ds_length-ds_ind-1)])
+        curve.append(new_agg)
+
+    # now save curve to runname / curve.json
+    (runname / f'curves_seed{seed}').mkdir(exist_ok=True)
+    with open(runname / f'curves_seed{seed}' / f"curve_class{str(class_index).zfill(2)}.json", 'w') as f:
+        f.write(str(curve).replace("'", '"'))
+
+
+        
