@@ -27,7 +27,7 @@ def compute_features_list(images):
     """
     with torch.no_grad():
         timgs = [preprocess_image_array(img, target_size=DINO_RESIZE) for img in images]
-        timgs = torch.concatenate(timgs, dim=0)
+        timgs = torch.concat(timgs, dim=0)
         outs = dino.forward_features(timgs)
         feats = outs['x_norm_patchtokens']
         P = DINO_PATCH_SIZE
@@ -42,7 +42,7 @@ def preprocess_image_array(image_array, target_size):
     assert image_array.dtype == np.uint8
     assert len(image_array.shape) == 3
     assert image_array.shape[2] == 3
-    assert image_array.max() > 1
+    assert image_array.max() > 1 or image_array.max() == 0
     # Step 1: Normalize using mean and std of ImageNet dataset
     mean = np.array([0.485, 0.456, 0.406])
     std = np.array([0.229, 0.224, 0.225])
