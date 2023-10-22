@@ -1,6 +1,6 @@
 from pathlib import Path
 import os
-os.environ['DETECTRON2_DATASETS'] = "/home/franchesoni/adisk/"
+os.environ['DETECTRON2_DATASETS'] = "/gpfsscratch/rech/chl/uyz17rc/cvpr/data"
 import tqdm
 import shutil
 import cProfile
@@ -94,7 +94,8 @@ def describe(var, level=0):
         print(f'{indent}Type: {type(var)}')
         print(f'{indent}Value: {var}')
 
-def main(dev=False):
+def main(mode, dev=False):
+    assert mode in ['sam', 'dino', 'dry']
     ds_names = get_detectron2_datasets()
 
     TEST_DATASETS=['atlantis_sem_seg_test', 'chase_db1_sem_seg_test', 'corrosion_cs_sem_seg_test', 'cryonuseg_sem_seg_test', 'cub_200_sem_seg_test', 'cwfid_sem_seg_test', 'dark_zurich_sem_seg_val', 'deepcrack_sem_seg_test', 'dram_sem_seg_test', 'foodseg103_sem_seg_test', 'isaid_sem_seg_val', 'kvasir_instrument_sem_seg_test', 'mhp_v1_sem_seg_test', 'paxray_sem_seg_test_bones', 'paxray_sem_seg_test_diaphragm', 'paxray_sem_seg_test_lungs', 'paxray_sem_seg_test_mediastinum', 'pst900_sem_seg_test', 'suim_sem_seg_test', 'worldfloods_sem_seg_test_irrg', 'zerowaste_sem_seg_test']
@@ -118,17 +119,20 @@ def main(dev=False):
     print('='*80)
 
     # processing cwfid_sem_seg_test <- INCOMPLETE SAM
-    # process masks
-    for ds_name in found:
-        print('SAM processing', ds_name)
-        ds = TorchvisionDataset(ds_name, transform=to_numpy, mask_transform=to_numpy)
-        precompute_for_dataset(ds, f'/home/franchesoni/adisk/precomputed/{ds_name}/sam', reset=False, dev=dev, dino=False, sam=True, overwrite=False, return_if_dir_exists=False)
+    if mode == 'sam':
+        # process masks
+        for ds_name in found:
+            print('SAM processing', ds_name)
+            ds = TorchvisionDataset(ds_name, transform=to_numpy, mask_transform=to_numpy)
+            precompute_for_dataset(ds, f'/home/franchesoni/adisk/precomputed/{ds_name}/sam', reset=False, dev=dev, dino=False, sam=True, overwrite=False, return_if_dir_exists=False)
 
-    # process features
-    for ds_name in found:
-        print('DINO processing', ds_name)
-        ds = TorchvisionDataset(ds_name, transform=to_numpy, mask_transform=to_numpy)
-        precompute_for_dataset(ds, f'/home/franchesoni/adisk/precomputed/{ds_name}/dino', reset=False, dev=dev, dino=True, sam=False, overwrite=False, return_if_dir_exists=False)
+    if mode == 'dino':
+        # process features
+        for ds_name in found:
+            print('DINO processing', ds_name)
+            ds = TorchvisionDataset(ds_name, transform=to_numpy, mask_transform=to_numpy)
+            precompute_for_dataset(ds, f'/home/franchesoni/adisk/precomputed/{ds_name}/dino', reset=False, dev=dev, dino=True, sam=False, overwrite=False, return_if_dir_exists=False)
+
 
     print('great!')
 
