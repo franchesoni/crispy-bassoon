@@ -11,6 +11,7 @@ from PIL import Image
 from IISS.large_experiment import extract_masks_single
 from IISS.compute_features import compute_features_list
 from mess.datasets.TorchvisionDataset import TorchvisionDataset, get_detectron2_datasets, get_class_names
+from config import datasets_path
 
 
 def precompute_for_dataset(torchvision_dataset, dstdir, reset=False, dev=False, dino=True, sam=True, overwrite=False, return_if_dir_exists=True):
@@ -124,14 +125,14 @@ def main(mode, dev=False):
         for ds_name in found:
             print('SAM processing', ds_name)
             ds = TorchvisionDataset(ds_name, transform=to_numpy, mask_transform=to_numpy)
-            precompute_for_dataset(ds, f'/home/franchesoni/adisk/precomputed/{ds_name}/sam', reset=False, dev=dev, dino=False, sam=True, overwrite=False, return_if_dir_exists=False)
+            precompute_for_dataset(ds, os.path.join(datasets_path,  f'precomputed/{ds_name}/sam'), reset=False, dev=dev, dino=False, sam=True, overwrite=False, return_if_dir_exists=False)
 
     if mode == 'dino':
         # process features
         for ds_name in found:
             print('DINO processing', ds_name)
             ds = TorchvisionDataset(ds_name, transform=to_numpy, mask_transform=to_numpy)
-            precompute_for_dataset(ds, f'/home/franchesoni/adisk/precomputed/{ds_name}/dino', reset=False, dev=dev, dino=True, sam=False, overwrite=False, return_if_dir_exists=False)
+            precompute_for_dataset(ds, os.path.join(datasets_path, f'precomputed/{ds_name}/dino'), reset=False, dev=dev, dino=True, sam=False, overwrite=False, return_if_dir_exists=False)
 
 
     print('great!')
