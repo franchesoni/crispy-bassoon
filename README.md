@@ -1,11 +1,13 @@
 # crispy-bassoon
 
 **setup**
+first follow the instructions in mess to set up a conda environment (I don't like it either, but it's easy)
 ```
 pip install --upgrade pip
 pip install git+https://github.com/facebookresearch/segment-anything.git
 wget https://dl.fbaipublicfiles.com/segment_anything/sam_vit_b_01ec64.pth 
 wget https://dl.fbaipublicfiles.com/segment_anything/sam_vit_l_0b3195.pth
+pip install opencv-python scikit-image
 ```
 
 # structure
