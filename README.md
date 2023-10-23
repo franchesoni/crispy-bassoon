@@ -1,7 +1,7 @@
 # crispy-bassoon
 
 **setup**
-first follow the instructions in mess to set up a conda environment (I don't like it either, but it's easy)
+you can follow the instructions in `mess/setup_env.sh`, for manual install do a mix of that and:
 ```
 pip install --upgrade pip
 pip install git+https://github.com/facebookresearch/segment-anything.git
@@ -9,6 +9,15 @@ wget https://dl.fbaipublicfiles.com/segment_anything/sam_vit_b_01ec64.pth
 wget https://dl.fbaipublicfiles.com/segment_anything/sam_vit_l_0b3195.pth
 pip install opencv-python scikit-image
 ```
+
+**guide to run the experiments in the supercomputer**
+`module load pytorch-gpu/py3/1.10.1` (ii) download sam model. DINO is downloaded via torchvision hub. You have to run dino with internet connection at least once to download the weights 
+`bash mess/env_setup.sh`
+
+follow the instructions on mess repo to download the datasets. Some won't be downloaded. DRAM needs to be processed by hand with a local installation of rar.
+
+
+
 
 # structure
 - `baselines`
