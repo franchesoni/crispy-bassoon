@@ -1,6 +1,6 @@
 import numpy as np
 
-from segment_anything import SamAutomaticMaskGenerator, sam_model_registry
+from segment_anything import SamAutomaticMaskGenerator, sam_model_registry, SamPredictor
 from config import device, dev, MIN_MASK_REGION_AREA
 
 if dev:
@@ -41,3 +41,17 @@ def extract_masks_list(images):
         print(f'extracting masks for image {imgind+1} of {len(images)}', end='\r')
         masks_per_frame.append(extract_masks_single(image))
     return masks_per_frame
+
+sam.to(device=device)
+sam_predictor = SamPredictor(sam)
+
+# given an image we should extract the SAM features.
+def get_embedding_sam(img: np.ndarray) -> dict:
+    sam_predictor.set_image(img)
+    embedding = {}
+    embedding["original_size"] = sam_predictor.original_size
+    embedding["input_size"] = sam_predictor.input_size
+    embedding["features"] = sam_predictor.get_image_embedding()  # torch.Tensor
+    return embedding
+
+
