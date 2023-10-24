@@ -18,8 +18,62 @@ from IISS.create_segmentation import create_segmentation
 
 from metrics import compute_tps_fps_tns_fns, compute_global_metrics
 
+def get_inter_union(y_true, y_pred):
+    return np.logical_and(y_true, y_pred).sum(), np.logical_or(y_true, y_pred).sum()
 
-def get_clicked_segment(pred_masks, dinosam_masks, gt_masks):  # optimize for accuracy
+def get_clicked_segment(pred_masks, dinosam_masks, gt_masks):  
+    """Based on IoU, return when no more improvement is possible. Cycles could happen."""
+    max_iou_improvement = -np.inf  # Initialize to negative infinity
+    chosen_frame_ind, chosen_mask_ind, is_pos = None, None, None  # Initialize variables
+    
+    for frame_ind, fmasks in enumerate(dinosam_masks):
+        pred_mask = pred_masks[frame_ind]
+        gt_mask = gt_masks[frame_ind]
+        current_inter, current_union = get_inter_union(gt_mask, pred_mask)
+        current_iou = current_inter / current_union
+        
+        for mask_ind, mask in enumerate(fmasks):
+            # check if this mask can give us a relevant improvement
+            max_possible_new_IoU_pos = (current_inter + mask['area']) / current_union
+            max_possible_improvement_pos = max_possible_new_IoU_pos - current_IoU
+            max_possible_new_IoU_neg = current_inter / (current_union - mask['area'])
+            max_possible_improvement_neg = max_possible_new_IoU_neg - current_IoU
+            max_possible_improvement = max(max_possible_improvement_pos, max_possible_improvement_neg)
+            if max_possible_improvement <= max_iou_improvement:
+                continue
+
+            # if not, compute the improvement it gives when clicked (pos and neg)
+            seg = mask['segmentation']
+            # Positive mask combination
+            new_pos_pred = np.logical_or(pred_mask, seg)
+            new_pos_iou = jaccard_score(gt_mask.ravel(), new_pos_pred.ravel())
+            iou_improvement = new_pos_iou - current_iou
+            
+            if iou_improvement > max_iou_improvement:
+                max_iou_improvement = iou_improvement
+                chosen_frame_ind = frame_ind
+                chosen_mask_ind = mask_ind
+                is_pos = True
+                
+            # Negative mask combination
+            new_neg_pred = np.logical_and(pred_mask, np.logical_not(seg))
+            new_neg_iou = jaccard_score(gt_mask.ravel(), new_neg_pred.ravel())
+            iou_improvement = new_neg_iou - current_iou
+            
+            if iou_improvement > max_iou_improvement:
+                max_iou_improvement = iou_improvement
+                chosen_frame_ind = frame_ind
+                chosen_mask_ind = mask_ind
+                is_pos = False
+                
+    if max_iou_improvement <= 0:
+        return None
+    
+    return (chosen_frame_ind, chosen_mask_ind, is_pos)
+
+
+def get_clicked_segment_acc(pred_masks, dinosam_masks, gt_masks):  # optimize for accuracy
+    """Based on error reduction, return when no more improvement is possible. Cycles could happen."""
     max_err_reduction = -np.inf
     for frame_ind, fmasks in enumerate(dinosam_masks):
         pred_mask = pred_masks[frame_ind]
@@ -46,7 +100,7 @@ def get_clicked_segment(pred_masks, dinosam_masks, gt_masks):  # optimize for ac
                 chosen_frame_ind = frame_ind
                 chosen_mask_ind = mask_ind
                 is_pos = False
-    if max_err_reduction < 0:
+    if max_err_reduction <= 0:
         return None
     return (chosen_frame_ind, chosen_mask_ind, is_pos)
 
