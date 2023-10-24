@@ -36,7 +36,7 @@ def get_clicked_segment(pred_masks, dinosam_masks, gt_masks):
             # check if this mask can give us a relevant improvement
             max_possible_new_IoU_pos = min((current_inter + mask['area']), current_union) / current_union
             max_possible_improvement_pos = max_possible_new_IoU_pos - current_iou
-            max_possible_new_IoU_neg = current_inter / max(current_inter, (current_union - mask['area']))
+            max_possible_new_IoU_neg = current_inter / max(current_inter, (current_union - mask['area'])) if current_inter > 0 else 0
             max_possible_improvement_neg = max_possible_new_IoU_neg - current_iou
             max_possible_improvement = max(max_possible_improvement_pos, max_possible_improvement_neg)
             if max_possible_improvement <= max_iou_improvement:
