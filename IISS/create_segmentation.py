@@ -5,7 +5,7 @@ def create_segmentation(masks_per_image, labels, clicks):
     pred_masks = []
     ind = 0
     for masks in masks_per_image:
-        frame_pred = np.zeros_like(masks[0]['segmentation'], dtype=int)
+        frame_pred = np.zeros_like(masks[0]['segmentation'], dtype=float)
         for mask in masks:
             frame_pred += mask['segmentation'] * labels[ind]
             ind += 1
