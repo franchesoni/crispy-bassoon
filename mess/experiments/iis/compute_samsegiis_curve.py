@@ -47,6 +47,7 @@ def main(precomputed_dir, dstdir, max_clicks_per_image=10, reset=False, ds=None)
     ds_names = sorted([ds_name for ds_name in ds_names if ds_name in TEST_DATASETS])
 
     for ds_name in ds_names:
+        (dstdir / 'vis' / ds_name).mkdir(exist_ok=True, parents=True)
         metrics_per_ds = {}
         ds = TorchvisionDataset(ds_name, transform=to_numpy, mask_transform=to_numpy)
         class_indices, class_names = np.arange(len(ds.class_names)), ds.class_names
@@ -84,22 +85,22 @@ def main(precomputed_dir, dstdir, max_clicks_per_image=10, reset=False, ds=None)
                             agg_sam_mask = np.zeros_like(pred_masks[0]).astype(np.uint8)
                             for sam_mask in sam_masks:
                                 agg_sam_mask += (sam_mask['segmentation']).astype(np.uint8)
-                            Image.fromarray(agg_sam_mask).save(dstdir / 'vis' / f'sample_{sample_ind}_agg_sam_mask.png')
+                            Image.fromarray(agg_sam_mask).save(dstdir / 'vis' / ds_name / f'sample_{sample_ind}_agg_sam_mask.png')
                             agg_mask_saved = True
                         if not img_saved:
                             # plot image
                             img = sample[0]
-                            Image.fromarray(img).save(dstdir / 'vis' / f'sample_{sample_ind}_img.png')
+                            Image.fromarray(img).save(dstdir  / 'vis' / ds_name / f'sample_{sample_ind}_img.png')
                             img_saved = True
                         # plot clicked mask
                         clicked_sam_mask = sam_masks[clicked_segment[1]]['segmentation']
-                        Image.fromarray(clicked_sam_mask).save(dstdir / 'vis' / f'class_{class_name}_sample_{sample_ind}_click_{click_ind}_selected.png')
+                        Image.fromarray(clicked_sam_mask).save(dstdir / 'vis' / ds_name / f'class_{class_name}_sample_{sample_ind}_click_{click_ind}_selected.png')
                         # plot error map
                         error_map = np.zeros((clicked_sam_mask.shape + (3,)))
                         error_map[np.logical_and(gt_masks[0],pred_masks[0])] = np.array([255, 255, 255])
                         error_map[np.logical_and(~gt_masks[0], pred_masks[0])] = np.array([0, 0, 255])
                         error_map[np.logical_and(gt_masks[0], ~pred_masks[0])] = np.array([255, 0, 0])
-                        Image.fromarray(error_map.astype(np.uint8)).save(dstdir / 'vis' / f'class_{class_name}_sample_{sample_ind}_click_{click_ind}_error_map.png')
+                        Image.fromarray(error_map.astype(np.uint8)).save(dstdir / 'vis' / ds_name / f'class_{class_name}_sample_{sample_ind}_click_{click_ind}_error_map.png')
                     
 
                     
