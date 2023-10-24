@@ -1,12 +1,12 @@
 from pathlib import Path
 import os
-os.environ['DETECTRON2_DATASETS'] = "/gpfsscratch/rech/chl/uyz17rc/cvpr/data"
+from config import datasets_path
+os.environ['DETECTRON2_DATASETS'] = str(datasets_path)
 import numpy as np
 import torch
 from PIL import Image
 
 from mess.datasets.TorchvisionDataset import TorchvisionDataset, get_detectron2_datasets
-from config import datasets_path
 
 def to_numpy(x):
     return np.array(x)
