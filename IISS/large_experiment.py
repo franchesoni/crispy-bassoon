@@ -35,9 +35,9 @@ def get_clicked_segment(pred_masks, dinosam_masks, gt_masks):
         for mask_ind, mask in enumerate(fmasks):
             # check if this mask can give us a relevant improvement
             max_possible_new_IoU_pos = (current_inter + mask['area']) / current_union
-            max_possible_improvement_pos = max_possible_new_IoU_pos - current_IoU
+            max_possible_improvement_pos = max_possible_new_IoU_pos - current_iou
             max_possible_new_IoU_neg = current_inter / (current_union - mask['area'])
-            max_possible_improvement_neg = max_possible_new_IoU_neg - current_IoU
+            max_possible_improvement_neg = max_possible_new_IoU_neg - current_iou
             max_possible_improvement = max(max_possible_improvement_pos, max_possible_improvement_neg)
             if max_possible_improvement <= max_iou_improvement:
                 continue
@@ -46,7 +46,8 @@ def get_clicked_segment(pred_masks, dinosam_masks, gt_masks):
             seg = mask['segmentation']
             # Positive mask combination
             new_pos_pred = np.logical_or(pred_mask, seg)
-            new_pos_iou = jaccard_score(gt_mask.ravel(), new_pos_pred.ravel())
+            new_pos_inter, new_pos_union = get_inter_union(gt_mask, new_pos_pred)
+            new_pos_iou = new_pos_inter / new_pos_union
             iou_improvement = new_pos_iou - current_iou
             
             if iou_improvement > max_iou_improvement:
@@ -57,7 +58,8 @@ def get_clicked_segment(pred_masks, dinosam_masks, gt_masks):
                 
             # Negative mask combination
             new_neg_pred = np.logical_and(pred_mask, np.logical_not(seg))
-            new_neg_iou = jaccard_score(gt_mask.ravel(), new_neg_pred.ravel())
+            new_neg_inter, new_neg_union = get_inter_union(gt_mask, new_neg_pred)
+            new_neg_iou = new_neg_inter / new_neg_union
             iou_improvement = new_neg_iou - current_iou
             
             if iou_improvement > max_iou_improvement:
