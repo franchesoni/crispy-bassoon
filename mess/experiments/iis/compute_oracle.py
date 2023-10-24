@@ -54,7 +54,7 @@ def main(precomputed_dir, dstdir, reset=False, resume=False, ds=None):
         except FileExistsError:
             continue
 
-        if resume:
+        if resume and (dstdir / f'{ds_name}.json').exists():
             with open(dstdir / f'{ds_name}.json', 'r') as f:
                 metrics_for_dataset = ast.literal_eval(f.read())
         else:
