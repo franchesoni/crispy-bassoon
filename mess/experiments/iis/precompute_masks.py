@@ -8,13 +8,13 @@ import numpy as np
 import torch
 from PIL import Image
 
-from IISS.large_experiment import extract_masks_single
+from IISS.extract_masks import extract_masks_single, get_embedding_sam
 from IISS.compute_features import compute_features_list
-from mess.datasets.TorchvisionDataset import TorchvisionDataset, get_detectron2_datasets, get_class_names
+from mess.datasets.TorchvisionDataset import TorchvisionDataset, get_detectron2_datasets
 from config import datasets_path
 
 
-def precompute_for_dataset(torchvision_dataset, dstdir, reset=False, dev=False, dino=True, sam=True, overwrite=False, return_if_dir_exists=True):
+def precompute_for_dataset(torchvision_dataset, dstdir, reset=False, dev=False, dino=False, sam=False, sam_embeddings=True, overwrite=False, return_if_dir_exists=True):
     ndigits = len(str(len(torchvision_dataset)))
     dstdir = Path(dstdir)
     if dstdir.exists():
@@ -45,6 +45,13 @@ def precompute_for_dataset(torchvision_dataset, dstdir, reset=False, dev=False, 
             img, mask = torchvision_dataset[i]
             img_features = compute_features_list([img])[0]
             np.save(dstfile, img_features)
+        if sam_embeddings:
+            dstfile = dstdir / f'sam_embedding_{str(i).zfill(ndigits)}.npy'
+            if dstfile.exists() and not overwrite:
+                continue
+            img, mask = torchvision_dataset[i]
+            embedding = get_embedding_sam(img)
+            np.save(dstfile, embedding)
         if i == 3:
             # save the profile
             pr.disable()
@@ -96,7 +103,7 @@ def describe(var, level=0):
         print(f'{indent}Value: {var}')
 
 def main(mode, dev=False, ds=None):
-    assert mode in ['sam', 'dino', 'dry']
+    assert mode in ['sam', 'dino', 'describe', 'sam_embeddings']
     ds_names = get_detectron2_datasets()
 
     TEST_DATASETS=['atlantis_sem_seg_test', 'chase_db1_sem_seg_test', 'corrosion_cs_sem_seg_test', 'cryonuseg_sem_seg_test', 'cub_200_sem_seg_test', 'cwfid_sem_seg_test', 'dark_zurich_sem_seg_val', 'deepcrack_sem_seg_test', 'dram_sem_seg_test', 'foodseg103_sem_seg_test', 'isaid_sem_seg_val', 'kvasir_instrument_sem_seg_test', 'mhp_v1_sem_seg_test', 'paxray_sem_seg_test_bones', 'paxray_sem_seg_test_diaphragm', 'paxray_sem_seg_test_lungs', 'paxray_sem_seg_test_mediastinum', 'pst900_sem_seg_test', 'suim_sem_seg_test', 'worldfloods_sem_seg_test_irrg', 'zerowaste_sem_seg_test', 'ndd20_sem_seg_test', 'mypascalvoc_sem_seg_test', 'mysbd_sem_seg_test', 'mygrabcut_sem_seg_test']
@@ -105,36 +112,44 @@ def main(mode, dev=False, ds=None):
 
     ds_names = sorted([ds_name for ds_name in ds_names if ds_name in TEST_DATASETS])
 
-    found, not_found = [], []
-    for ds_name in ds_names:
-        try:
-            ds = TorchvisionDataset(ds_name, lambda x: x)
-            print('Sample of dataset', ds_name, 'of size', len(ds))
-            describe(ds[0], level=1)
-            found.append(ds_name)
-        except (AssertionError, FileNotFoundError, ModuleNotFoundError) as e:
-            not_found.append((ds_name, str(e)))
+    if mode == 'describe':
+        found, not_found = [], []
+        for ds_name in ds_names:
+            try:
+                ds = TorchvisionDataset(ds_name, lambda x: x)
+                print('Sample of dataset', ds_name, 'of size', len(ds))
+                describe(ds[0], level=1)
+                found.append(ds_name)
+            except (AssertionError, FileNotFoundError, ModuleNotFoundError) as e:
+                not_found.append((ds_name, str(e)))
 
-    print('='*80)
-    print('found:', found)
-    print('='*80)
-    print('not found:', not_found)
-    print('='*80)
+        print('='*80)
+        print('found:', found)
+        print('='*80)
+        print('not found:', not_found)
+        print('='*80)
 
-    # processing cwfid_sem_seg_test <- INCOMPLETE SAM
     if mode == 'sam':
         # process masks
-        for ds_name in found:
+        for ds_name in ds_names:
             print('SAM processing', ds_name)
             ds = TorchvisionDataset(ds_name, transform=to_numpy, mask_transform=to_numpy)
             precompute_for_dataset(ds, os.path.join(datasets_path,  f'precomputed/{ds_name}/sam'), reset=False, dev=dev, dino=False, sam=True, overwrite=False, return_if_dir_exists=False)
 
     if mode == 'dino':
         # process features
-        for ds_name in found:
+        for ds_name in ds_names:
             print('DINO processing', ds_name)
             ds = TorchvisionDataset(ds_name, transform=to_numpy, mask_transform=to_numpy)
             precompute_for_dataset(ds, os.path.join(datasets_path, f'precomputed/{ds_name}/dino'), reset=False, dev=dev, dino=True, sam=False, overwrite=False, return_if_dir_exists=False)
+
+    if mode == 'sam_embeddings':
+        # process masks
+        for ds_name in ds_names:
+            print('SAM embeddings processing', ds_name)
+            ds = TorchvisionDataset(ds_name, transform=to_numpy, mask_transform=to_numpy)
+            precompute_for_dataset(ds, os.path.join(datasets_path,  f'precomputed/{ds_name}/sam_embeddings'), reset=False, dev=dev, dino=False, sam=False, sam_embeddings=True, overwrite=False, return_if_dir_exists=False)
+
 
 
     print('great!')
