@@ -1,3 +1,4 @@
+import time
 from pathlib import Path
 import os
 import shutil
@@ -82,11 +83,11 @@ def to_input_point_label(clicks: list[Click], N: int):
 
 
 def apply_f(
-    sam_predictor: SamPredictor,
-    embeddings: list[dict],
-    clicks: list[Click],
-    mask_inputs: list[None] | list[np.ndarray],
-) -> tuple[list[np.ndarray], list[np.ndarray] | list[None]]:
+    sam_predictor,
+    embeddings,
+    clicks,
+    mask_inputs,
+):
     out_masks, out_logits = [], []
     N = len(embeddings)
     input_points, input_labels = to_input_point_label(clicks, N)
@@ -364,7 +365,7 @@ def handle_dstdir(dstdir, reset, resume):
     return dstdir
      
         
-def main(precomputed_dir, dstdir, max_clicks_per_image=10, reset=False, resume=False, ds=None, dev=False):
+def main(precomputed_dir, dstdir, max_clicks_per_image=10, reset=False, resume=False, ds=None, dev=False, plot=False):
     """`precomputed_dir` is a folder where the precomputed variables are stored. The variables are stored at `precomputed_dir / ds_name / sam_embeddings / sam_embedding_000.npy` where `000` is the image index on the dataset."""
     precomputed_dir = Path(precomputed_dir)
     assert precomputed_dir.exists()
@@ -382,11 +383,15 @@ def main(precomputed_dir, dstdir, max_clicks_per_image=10, reset=False, resume=F
         except FileExistsError:
             continue
 
+        dstjson = dstdir / f'{ds_name}.json'
         if resume:
-            with open(dstdir / f'{ds_name}.json', 'r') as f:
-                metrics_for_dataset = ast.literal_eval(f.read())
+            if dstjson.exists():
+                with open(dstjson, 'r') as f:
+                    metrics_for_dataset = ast.literal_eval(f.read())
+            else:
+                print('brand new run')
+                metrics_for_dataset = {}
         else:
-            (dstdir / 'vis' / ds_name).mkdir(exist_ok=True, parents=True)
             metrics_for_dataset = {}
 
         print(f'running {ds_name}')
@@ -395,6 +400,7 @@ def main(precomputed_dir, dstdir, max_clicks_per_image=10, reset=False, resume=F
         class_indices, class_names = np.arange(len(ds.class_names)), ds.class_names
         n_digits = len(str(len(ds)))
         values_to_ignore = [255] + [ind for ind, cls_name in zip(class_indices, class_names) if cls_name in ['background', 'others', 'unlabeled', 'background (waterbody)', 'background or trash']]
+        st, n_imgs = time.time(), 0
         for sample_ind, sample in tqdm.tqdm(enumerate(ds)):
 
             if resume and sample_ind in metrics_for_dataset:
@@ -403,11 +409,12 @@ def main(precomputed_dir, dstdir, max_clicks_per_image=10, reset=False, resume=F
                 if sample_ind > 4:
                     break
             metrics_for_dataset[sample_ind] = {}
-            embedding = np.load(precomputed_dir / ds_name / 'sam_embeddings' / f'sam_embedding_{str(sample_ind).zfill(n_digits)}.npy', allow_pickle=True)
+            embedding = np.load(precomputed_dir / ds_name / 'sam_embeddings' / f'sam_embedding_{str(sample_ind).zfill(n_digits)}.npy', allow_pickle=True).item()
             img = sample[0]
             mask = sample[1]
             gt_masks = [mask == value for value in np.unique(mask) if value not in values_to_ignore]
             subdstdir = dstdir / f'img_{str(sample_ind).zfill(n_digits)}'
+            subdstdir.mkdir()
 
 
             for mvalue_ind, value in enumerate(np.unique(mask)):
@@ -418,26 +425,28 @@ def main(precomputed_dir, dstdir, max_clicks_per_image=10, reset=False, resume=F
                 if gt_masks[0].sum() == 0:
                     metrics_for_dataset[sample_ind][class_name] = None
                     continue
-
                 subdstdirmask = subdstdir / f"class_{class_name}"
                 subdstdirmask.mkdir()
+
                 clicks, metrics = annotate_stack(
                     images=[img],
                     gt_masks=gt_masks,
                     iis_predictor=sam_predictor,
-                    embeddings=embedding,
+                    embeddings=[embedding],
                     robot_clicker=robot_click_multiple,
                     propagate_fn=propagate_dummy,
                     propagator_state={},
                     dstdir=subdstdirmask,
                     max_clicks=max_clicks_per_image,
-                    noplt=True,
+                    noplt=not plot,
                 )
                 metrics_for_dataset[sample_ind][class_name] = metrics
             print(f'processed {sample_ind+1}/{len(ds)}', end='\r')
             with open(dstdir / f'{ds_name}.json', 'w') as f:
                 f.write(str(metrics_for_dataset).replace("'", '"'))
+            n_imgs += 1
                 
+        print(f'processed {n_imgs/len(ds)*100}% of {len(ds)} in {time.time() - st} seconds')
 
     print('great!')
 
