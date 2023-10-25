@@ -24,7 +24,8 @@ def main(run_path, ds=None):
 
     complete, uncomplete = [], []
     for ds_name in ds_names:
-        print('='*80)
+        print(f'DATASET {ds_name}')
+        print('='*50)
         ds = TorchvisionDataset(ds_name, transform=to_numpy, mask_transform=to_numpy)
         metrics_file = run_path / ds_name / f'{ds_name}.json'
         if not metrics_file.exists():

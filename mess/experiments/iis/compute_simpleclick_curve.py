@@ -75,6 +75,9 @@ def handle_dstdir(dstdir, reset, resume):
     if not (resume or reset):
         if dstdir.exists():
             raise FileExistsError('run already exists, you should resume or reset')
+        else:
+            print('creating brand new run')
+            dstdir.mkdir(parents=True)
     elif reset:
         if dstdir.exists():
             shutil.rmtree(dstdir)
@@ -219,9 +222,12 @@ def main(dstdir, max_clicks_per_image=10, reset=False, resume=False, ds=None, de
                     metrics.append(metdict)
                     with open(f"{subdstdirmask}/metrics.json", "w") as f:
                         f.write(str(metrics).replace("'", '"'))
+                metrics_for_dataset[sample_ind][class_name] = metrics
                 with open(f"{subdstdirmask}/clicks.json", "w") as f:
                     f.write(str([list(c) for c in clicks]).replace("'", '"'))
 
+            with open(dstdir / f'{ds_name}.json', 'w') as f:
+                f.write(str(metrics_for_dataset).replace("'", '"'))
 
             n_imgs += 1
                 
@@ -231,10 +237,7 @@ def main(dstdir, max_clicks_per_image=10, reset=False, resume=False, ds=None, de
 
 if __name__ == '__main__':
     import sys
-    import pkg_resources
-    package_name = __package__
-    package_path = pkg_resources.resource_filename(package_name, '')
-    simpleclick_path = os.path.join(package_path, 'SimpleClick')
+    simpleclick_path = str(Path(__file__).parent / 'SimpleClick')
     print(f'adding {simpleclick_path} to path')
     sys.path.append(simpleclick_path)
     from clean_inference import load_controller
