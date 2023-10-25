@@ -49,18 +49,7 @@ def describe(var, level=0):
         print(f'{indent}Type: {type(var)}')
         print(f'{indent}Value: {var}')
 
-def main(mode, ds=None):
-    assert mode in ['sam', 'dino']
-    ds_names = get_detectron2_datasets()
-    # classes to ignore:
-    # others, background, unlabeled, 'background (waterbody)', 'background or trash'
-
-    TEST_DATASETS=['atlantis_sem_seg_test', 'chase_db1_sem_seg_test', 'corrosion_cs_sem_seg_test', 'cryonuseg_sem_seg_test', 'cub_200_sem_seg_test', 'cwfid_sem_seg_test', 'dark_zurich_sem_seg_val', 'deepcrack_sem_seg_test', 'dram_sem_seg_test', 'foodseg103_sem_seg_test', 'isaid_sem_seg_val', 'kvasir_instrument_sem_seg_test', 'mhp_v1_sem_seg_test', 'paxray_sem_seg_test_bones', 'paxray_sem_seg_test_diaphragm', 'paxray_sem_seg_test_lungs', 'paxray_sem_seg_test_mediastinum', 'pst900_sem_seg_test', 'suim_sem_seg_test', 'worldfloods_sem_seg_test_irrg', 'zerowaste_sem_seg_test', 'ndd20_sem_seg_test', 'mypascalvoc_sem_seg_test', 'mysbd_sem_seg_test', 'mygrabcut_sem_seg_test']
-    assert (ds is None) or ds in TEST_DATASETS 
-    TEST_DATASETS = TEST_DATASETS if ds is None else [ds]
-
-    ds_names = sorted([ds_name for ds_name in ds_names if ds_name in TEST_DATASETS])
-
+def describe_show_found(ds_names):
     found, not_found = [], []
     for ds_name in ds_names:
         try:
@@ -82,17 +71,35 @@ def main(mode, ds=None):
             found.append(ds_name)
         except (AssertionError, FileNotFoundError, ModuleNotFoundError) as e:
             not_found.append((ds_name, str(e)))
+    return found, not_found
 
-    print('='*80)
-    print('found:', found)
-    print('='*80)
-    print('not found:', not_found)
-    print('='*80)
+
+
+def main(mode, ds=None, describe=False):
+    assert mode in ['sam', 'dino', 'sam_embeddings']
+    ds_names = get_detectron2_datasets()
+    # classes to ignore:
+    # others, background, unlabeled, 'background (waterbody)', 'background or trash'
+
+    TEST_DATASETS=['atlantis_sem_seg_test', 'chase_db1_sem_seg_test', 'corrosion_cs_sem_seg_test', 'cryonuseg_sem_seg_test', 'cub_200_sem_seg_test', 'cwfid_sem_seg_test', 'dark_zurich_sem_seg_val', 'deepcrack_sem_seg_test', 'dram_sem_seg_test', 'foodseg103_sem_seg_test', 'isaid_sem_seg_val', 'kvasir_instrument_sem_seg_test', 'mhp_v1_sem_seg_test', 'paxray_sem_seg_test_bones', 'paxray_sem_seg_test_diaphragm', 'paxray_sem_seg_test_lungs', 'paxray_sem_seg_test_mediastinum', 'pst900_sem_seg_test', 'suim_sem_seg_test', 'worldfloods_sem_seg_test_irrg', 'zerowaste_sem_seg_test', 'ndd20_sem_seg_test', 'mypascalvoc_sem_seg_test', 'mysbd_sem_seg_test', 'mygrabcut_sem_seg_test']
+    assert (ds is None) or ds in TEST_DATASETS 
+    TEST_DATASETS = TEST_DATASETS if ds is None else [ds]
+
+    ds_names = sorted([ds_name for ds_name in ds_names if ds_name in TEST_DATASETS])
+
+    if describe:
+        found, not_found = describe_show_found(ds_names)
+        print('='*80)
+        print('found:', found)
+        print('='*80)
+        print('not found:', not_found)
+        print('='*80)
+    else:
+        found = ds_names
 
     # processing cwfid_sem_seg_test <- INCOMPLETE SAM
     complete, uncomplete = [], []
     # process masks
-    breakpoint()
     for ds_name in found:
         print(f'checking {mode}...', ds_name)
         ds = TorchvisionDataset(ds_name, transform=to_numpy, mask_transform=to_numpy)
