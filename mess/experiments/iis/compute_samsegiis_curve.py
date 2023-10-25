@@ -43,7 +43,6 @@ def main(precomputed_dir, dstdir, max_clicks_per_image=10, reset=False, resume=F
     """`precomputed_dir` is a folder where the precomputed variables are stored. The variables are stored at `precomputed_dir / ds_name / sam / sam_masks_000.npy` where `000` is the image index on the dataset."""
     precomputed_dir = Path(precomputed_dir)
     assert precomputed_dir.exists()
-    breakpoint()
 
     ds_names = get_detectron2_datasets()
     TEST_DATASETS=['atlantis_sem_seg_test', 'chase_db1_sem_seg_test', 'corrosion_cs_sem_seg_test', 'cryonuseg_sem_seg_test', 'cub_200_sem_seg_test', 'cwfid_sem_seg_test', 'dark_zurich_sem_seg_val', 'deepcrack_sem_seg_test', 'dram_sem_seg_test', 'foodseg103_sem_seg_test', 'isaid_sem_seg_val', 'kvasir_instrument_sem_seg_test', 'mhp_v1_sem_seg_test', 'paxray_sem_seg_test_bones', 'paxray_sem_seg_test_diaphragm', 'paxray_sem_seg_test_lungs', 'paxray_sem_seg_test_mediastinum', 'pst900_sem_seg_test', 'suim_sem_seg_test', 'worldfloods_sem_seg_test_irrg', 'zerowaste_sem_seg_test', 'ndd20_sem_seg_test', 'mypascalvoc_sem_seg_test', 'mysbd_sem_seg_test', 'mygrabcut_sem_seg_test']
