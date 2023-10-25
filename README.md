@@ -2,6 +2,7 @@
 
 **setup**
 you can follow the instructions in `mess/setup_env.sh`, for manual install do a mix of that and:
+you might also need to update numpy from 1.21 to 1.25
 ```
 pip install --upgrade pip
 pip install git+https://github.com/facebookresearch/segment-anything.git
