@@ -14,7 +14,7 @@ from mess.datasets.TorchvisionDataset import TorchvisionDataset, get_detectron2_
 from config import datasets_path
 
 
-def precompute_for_dataset(torchvision_dataset, dstdir, reset=False, dev=False, dino=False, sam=False, sam_embeddings=True, overwrite=False, return_if_dir_exists=True):
+def precompute_for_dataset(torchvision_dataset, dstdir, reset=False, dev=False, dino=False, sam=False, sam_embeddings=False, overwrite=False, return_if_dir_exists=True):
     ndigits = len(str(len(torchvision_dataset)))
     dstdir = Path(dstdir)
     if dstdir.exists():
