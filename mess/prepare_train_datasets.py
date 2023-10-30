@@ -21,13 +21,14 @@ def prepare_mhp(dataset_dir):
         # create directories
         img_dir = ds_path / 'images_detectron2' / split
         anno_dir = ds_path / 'annotations_detectron2' / split
-        img_dir().mkdir(parents=True, exist_ok=True)
-        anno_dir().mkdir(parents=True, exist_ok=True)
+        img_dir.mkdir(parents=True, exist_ok=True)
+        anno_dir.mkdir(parents=True, exist_ok=True)
 
         with open(ds_path / f'{split}_list.txt', 'r') as f:
             ids = f.read().splitlines()
-            if split == 'train':
-                ids = ids[:3000]  # as in original mess code
+        ids = [id.split('.')[0] for id in ids]
+        if split == 'train':
+            ids = ids[:3000]  # as in original mess code
 
         for id in tqdm.tqdm(ids):
             # Move image
@@ -36,10 +37,11 @@ def prepare_mhp(dataset_dir):
             img.save(img_dir / f'{id}.jpg')
 
             # Load all masks
-            mask_paths = (ds_path / 'annotations').glob(f'{id}*.png')
+            mask_paths = list((ds_path / 'annotations').glob(f'{id}*.png'))
             mask = np.stack([np.array(Image.open(mask_path)) for mask_path in mask_paths])
+            mask = Image.fromarray(mask.max(axis=0).astype(np.uint8))
             # Save mask
-            Image.fromarray(mask).save(anno_dir / f'{id}.png')
+            mask.save(anno_dir / f'{id}.png')
 
         print(f'Saved {split} images and masks of {ds_path.name} dataset')
     os.system(f"touch {ds_path / 'was_prepared'}")
@@ -284,6 +286,7 @@ def prepare_everything(detectron2_datasets_path):
     prepare_suim(dataset_dir)
     prepare_pst(dataset_dir)
     prepare_paxray(dataset_dir)
+    prepare_mhp(dataset_dir)
 
 if __name__ == '__main__':
     from fire import Fire
