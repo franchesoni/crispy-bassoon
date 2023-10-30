@@ -3,6 +3,8 @@ from pathlib import Path
 
 import gdown
 
+"""This script downloads all the datasets that have a direct public download link and have training data. Train and test splits are preferred, if one is missing, val is used instead, if the two are missing, then we have no split and the dataset should be discarded."""
+
 def dummy(detectron2_datasets_path):
     # dataset_dir = Path(os.getenv('DETECTRON2_DATASETS', 'datasets'))
     dataset_dir = Path(detectron2_datasets_path)
@@ -11,23 +13,25 @@ def dummy(detectron2_datasets_path):
 
     ######################################
     ######################################
-    """
-    Downloads the dataset
-    """
+def download_atlantis(dataset_dir):
     ds_path = dataset_dir / 'atlantis'
-    if not os.path.exists(ds_path):
-        ds_path.mkdir(parents=True)
+    if ds_path.exists():
+        print('Dataset already downloaded')
+        return
     # Dataset page: https://github.com/smhassanerfani/atlantis.git
     print('Downloading dataset...')
     # Downloading github repo
-    os.system(f'git clone https://github.com/smhassanerfani/atlantis.git {ds_path}')
+    os.system(f'git clone https://github.com/smhassanerfani/atlantis.git atlantisGit')
+    os.system('mv atlantisGit/atlantis ' + str(ds_path))
+    os.system('rm -Rf atlantisGit')
 
     ######################################
     ######################################
-    """
-    Downloads the dataset
-    """
+def download_chase(dataset_dir):
     ds_path = dataset_dir / 'CHASEDB1'
+    if ds_path.exists():
+        print('Dataset already downloaded')
+        return
     print('Downloading dataset...')
     # Downloading zip
     os.system('wget https://staffnet.kingston.ac.uk/~ku15565/CHASE_DB1/assets/CHASEDB1.zip')
@@ -36,34 +40,30 @@ def dummy(detectron2_datasets_path):
 
     ######################################
     ######################################
+def download_corrosion(dataset_dir):
     ds_path = dataset_dir / 'Corrosion Condition State Classification'
-    """
-    Downloads the dataset
-    """
+    if ds_path.exists():
+        print('Dataset already downloaded')
+        return
     print('Downloading dataset...')
     # Downloading zip
-    #
     os.system('wget https://figshare.com/ndownloader/files/31729733')
     os.system('unzip 31729733 -d ' + str(dataset_dir))
     os.system('rm 31729733')
 
     ######################################
     ######################################
-    ds_path = dataset_dir / 'CryoNuSeg'
-    print('Downloading dataset...')
-    # Download from Google Drive
-    # Folder: https://drive.google.com/drive/folders/1dgtO_mCcR4UNXw_4zK32NlakbAvnySck
-    gdown.download("https://drive.google.com/uc?export=download&confirm=pbef&id=1Or8qSpwLx77ZcWFqOKCKd3upwTUvb0U6")
-    gdown.download("https://drive.google.com/uc?export=download&confirm=pbef&id=1WHork0VjF1PTye1xvCTtPtly62uHF72J")
-    os.makedirs(ds_path, exist_ok=True)
-    os.system('unzip Final.zip -d ' + str(ds_path))
-    os.system('unzip masks.zip -d ' + str(ds_path))
-    os.system('rm Final.zip')
-    os.system('rm masks.zip')
+
+# deleted CryoNuSeg. CryoNuSeg doesn't have a training set 
 
     ######################################
     ######################################
+
+def download_cub(dataset_dir):
     ds_path = dataset_dir / "CUB_200_2011"
+    if ds_path.exists():
+        print('Dataset already downloaded')
+        return
     # Downloading data
     os.system("wget https://data.caltech.edu/records/65de6-vp158/files/CUB_200_2011.tgz")
     os.system(f"tar -xvzf CUB_200_2011.tgz -C {dataset_dir}")
@@ -73,13 +73,15 @@ def dummy(detectron2_datasets_path):
     os.system("wget https://data.caltech.edu/records/w9d68-gec53/files/segmentations.tgz")
     os.system(f"tar -xvzf segmentations.tgz -C {dataset_dir / 'CUB_200_2011'}")
     os.system(f"rm segmentations.tgz")
+    os.system("rm attributes.txt")
 
     ######################################
     ######################################
+def download_cwfid(dataset_dir):
     ds_path = dataset_dir / 'cwfid'
-    """
-    Downloads the dataset
-    """
+    if ds_path.exists():
+        print('Dataset already downloaded')
+        return
     # Dataset page: https://github.com/cwfid/dataset.git
     print('Downloading dataset...')
     # Downloading dataset from git repo
@@ -88,11 +90,12 @@ def dummy(detectron2_datasets_path):
 
     ######################################
     ######################################
+def download_darkzurich(dataset_dir):
     ds_path = dataset_dir / 'Dark_Zurich'
+    if ds_path.exists():
+        print('Dataset already downloaded')
+        return
     ds_path.mkdir(parents=True, exist_ok=True)
-    """
-    Downloads the dataset
-    """
     # Dataset page: https://www.trace.ethz.ch/publications/2019/GCMA_UIoU/
     print('Downloading dataset...')
     # Downloading zip
@@ -108,38 +111,45 @@ def dummy(detectron2_datasets_path):
 
     ######################################
     ######################################
+def download_deepcrack(dataset_dir):
     ds_path = dataset_dir / 'DeepCrack'
-    """
-    Downloads the dataset
-    """
+    if ds_path.exists():
+        print('Dataset already downloaded')
+        return
     print('Downloading dataset...')
     # Downloading git repo with zip
-    os.system('git clone https://github.com/yhlleo/DeepCrack.git')
-    os.system('unzip DeepCrack/dataset/DeepCrack.zip -d ' + str(ds_path))
-    os.system('rm -R DeepCrack')
+    os.system('git clone https://github.com/yhlleo/DeepCrack.git DeepCrackGit')
+    os.system('unzip DeepCrackGit/dataset/DeepCrack.zip -d ' + str(ds_path))
+    os.system('rm -Rf DeepCrackGit')
 
     ######################################
     ######################################
+def download_dram(dataset_dir):
+    unrarpath = None
+    unrarpath = "/gpfsscratch/rech/chl/uyz17rc/cvpr/rar/unrar"
+    if unrarpath is None:
+        raise ValueError("you should set unrar path")
     ds_path = dataset_dir / 'DRAM_processed'
-    """
-    Downloads the dataset
-    """
+    if ds_path.exists():
+        print('Dataset already downloaded')
+        return
     # Dataset page: https://faculty.runi.ac.il/arik/site/artseg/Dram-Dataset.html
     print('Downloading dataset...')
     # Downloading zip
     os.system('wget https://faculty.runi.ac.il/arik/site/artseg/DRAM_processed.zip')
     os.system('unzip DRAM_processed.zip -d ' + str(ds_path))
-    os.system(f'cd {ds_path} && unrar x DRAM_processed.rar')
+    os.system(f'cd {ds_path} && {unrarpath} x DRAM_processed.rar')
     os.system('rm DRAM_processed.zip')
     os.system('rm ' + str(ds_path / 'DRAM_processed.rar'))
 
     ######################################
     ######################################
+def download_foodseg(dataset_dir):
     ds_path = dataset_dir / 'FoodSeg103'
-    """
-    Downloads the dataset
-    """
     # Dataset page: https://github.com/LARC-CMU-SMU/FoodSeg103-Benchmark-v1
+    if ds_path.exists():
+        print('Dataset already downloaded')
+        return
     print('Downloading dataset...')
     # Downloading zip
     os.system('wget https://research.larc.smu.edu.sg/downloads/datarepo/FoodSeg103.zip')
@@ -150,20 +160,35 @@ def dummy(detectron2_datasets_path):
 
     ######################################
     ######################################
+def download_isaid(dataset_dir):
     ds_path = dataset_dir / 'isaid'
+    if ds_path.exists():
+        print('Dataset already downloaded')
+        return
     print('Downloading dataset...')
     # Download from Google Drive
     # Download val images https://drive.google.com/drive/folders/1RV7Z5MM4nJJJPUs6m9wsxDOJxX6HmQqZ?usp=share_link4
     gdown.download_folder(id='1RV7Z5MM4nJJJPUs6m9wsxDOJxX6HmQqZ', output=str(ds_path))
-    os.system(f'unzip {ds_path / "part1.zip"} -d {ds_path / "val"}')
+    os.system(f'unzip {ds_path / "part1.zip"} -d {ds_path / "val_images"}')
     os.system(f'rm {ds_path / "part1.zip"}')
     # Download val mask https://drive.google.com/drive/folders/1jlVr4ClmeBA01IQYx7Aq3Scx2YS1Bmpb
     gdown.download_folder(id='1jlVr4ClmeBA01IQYx7Aq3Scx2YS1Bmpb', output=str(ds_path))
-    os.system(f'unzip {ds_path / "images.zip"} -d {ds_path / "raw_val"}')
+    os.system(f'unzip {ds_path / "images.zip"} -d {ds_path / "val_masks"}')
     os.system(f'rm {ds_path / "images.zip"}')
 
-    # train images
-    gdown.download_folder(id='1MvSH7sNaY4p4lhwAU_BG3y7zth6-rtrD', output='tmp')
+    # train images and masks
+    gdown.download_folder(id='1MvSH7sNaY4p4lhwAU_BG3y7zth6-rtrD', output=str(ds_path))
+    os.system(f'unzip {ds_path / "part1.zip"} -d {ds_path / "train_images"}')
+    os.system(f'unzip {ds_path / "part2.zip"} -d {ds_path / "train_images"}')
+    os.system(f'unzip {ds_path / "part3.zip"} -d {ds_path / "train_images"}')
+    os.system(f'rm {ds_path / "part1.zip"}')
+    os.system(f'rm {ds_path / "part2.zip"}')
+    os.system(f'rm {ds_path / "part3.zip"}')
+    gdown.download(id='1YLjZ1cmA9PH3OfzMF-eq6T-O9FTGvSrx', output=str(ds_path / 'train_masks.zip'))
+    os.system(f'unzip {ds_path / "train_masks.zip"} -d {ds_path / "train_masks"}')
+    os.system(f'rm {ds_path / "train_masks.zip"}')
+    os.system(f'rm -rf {ds_path / "1"}')
+    
 
 # https://drive.google.com/drive/folders/1MvSH7sNaY4p4lhwAU_BG3y7zth6-rtrD?usp=sharing
 # https://drive.google.com/file/d/1pEmwJtugIWhiwgBqOtplNUtTG2T454zn/view?usp=drive_link, https://drive.google.com/file/d/1JBWCHdyZOd9ULX0ng5C9haAt3FMPXa3v/view?usp=drive_link, https://drive.google.com/file/d/1BlaGYNNEKGmT6OjZjsJ8HoUYrTTmFcO2/view?usp=drive_link
@@ -177,10 +202,11 @@ def dummy(detectron2_datasets_path):
 
     ######################################
     ######################################
+def download_kvasir(dataset_dir):
     ds_path = dataset_dir / "kvasir-instrument"
-    """
-    Downloads the dataset
-    """
+    if ds_path.exists():
+        print('Dataset already downloaded')
+        return
     print('Downloading dataset...')
     os.system("wget https://datasets.simula.no/downloads/kvasir-instrument.zip")
     os.system("unzip kvasir-instrument.zip -d " + str(dataset_dir))
@@ -192,16 +218,14 @@ def dummy(detectron2_datasets_path):
     os.system(f"rm {ds_path}/images.tar.gz")
     os.system(f"rm {ds_path}/masks.tar.gz")
 
-# wget --header="Host: storage.googleapis.com" --header="User-Agent: Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/118.0.0.0 Safari/537.36 Edg/118.0.2088.69" --header="Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7" --header="Accept-Language: en,es-419;q=0.9,es;q=0.8,fr;q=0.7,pt-BR;q=0.6,pt;q=0.5" --header="Cookie: _ga=GA1.3.2046005398.1697120548; _ga_L31B3DX5TC=GS1.1.1697120548.1.1.1697120586.0.0.0" --header="Connection: keep-alive" "https://storage.googleapis.com/cos-osf-prod-files-us/9a90c143c7cc7642ada45f607b74fb45fb498c981d1064893f1bbc4b8b1b49fe?response-content-disposition=attachment%3B%20filename%3D%22files_used_for_testing.txt%22%3B%20filename%2A%3DUTF-8%27%27files_used_for_testing.txt&GoogleAccessId=files-us%40cos-osf-prod.iam.gserviceaccount.com&Expires=1698671096&Signature=FKdGRNfZK9w%2BOp%2F%2BUxtx3LM%2BJWpWOj9H2bPjdOZ0GQ2kKw6YftynexTwJQBYcnbOtBB4hXeC76km3leZoyv3eCMKKOMkVqvwTl%2BJ2%2FDeICMHnT0D3ZwyzBrlFDQmngrAiJWn8cO4u3nUZzukOpbRBZk04T7WtnRbs2fuzGVn0N5cdpuWICFuyoJCfb6isCwmrT61LtN%2FifrEqZjCQn3tuVPKRtTyXVVs8Z6msNBWG6%2BtGtPRWkYxPWVQL%2BwmfYyLTLCYOhMcJ5KvT24ENi3S9sfbIYAEkQohjS8vdveEd9Is3kcv8sBQa3vs0WpBUmjZ8ST0nkP70yMmjw55I9qcgQ%3D%3D" -c -O 'files_used_for_testing.txt'
-
-# wget --header="Host: storage.googleapis.com" --header="User-Agent: Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/118.0.0.0 Safari/537.36 Edg/118.0.2088.69" --header="Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7" --header="Accept-Language: en,es-419;q=0.9,es;q=0.8,fr;q=0.7,pt-BR;q=0.6,pt;q=0.5" --header="Cookie: _ga=GA1.3.2046005398.1697120548; _ga_L31B3DX5TC=GS1.1.1697120548.1.1.1697120586.0.0.0" --header="Connection: keep-alive" "https://storage.googleapis.com/cos-osf-prod-files-us/42f066dabc92d071e9a7418c1817d0a760e7f998d483a6729b627ba6356b3851?response-content-disposition=attachment%3B%20filename%3D%22files_used_for_training.txt%22%3B%20filename%2A%3DUTF-8%27%27files_used_for_training.txt&GoogleAccessId=files-us%40cos-osf-prod.iam.gserviceaccount.com&Expires=1698671177&Signature=psQUhQQgHlEJWiMDfPMVpD3pr7vlVOccpU%2FXDn44Ub%2B5g1s2aaXgeHOOmnPlw2e%2FD9%2BGmDb9WUrbzNw4fS9ylr4%2Br5A%2BdslgiH7irxNyjUfwZ8dBkjCynExLJHAT%2BWT9uFNtbSzE0fARicy17T9g%2F2yxvCex3%2Fk6eIbsb99wySHMRULfi7X5vZYgkwopSADZ5%2FFXDKSpGN4QGZLLhYBZ%2F0bSXzNA8R87HxQ7AvNy%2FPH%2FbLsLtn58nkqVUs8ML42UNZngaeLyCvIGg9ITHyZjaSYZYlL%2FCpRg4MkKpztdDFeC8RR%2BLgCea%2BHMm8qPaTFCgPyOhY8E4jGztUeuWN5D0w%3D%3D" -c -O 'files_used_for_training.txt'
 
     ######################################
     ######################################
+def download_mhp(dataset_dir):
     ds_path = dataset_dir / 'LV-MHP-v1'
-    """
-    Downloads the dataset
-    """
+    if ds_path.exists():
+        print('Dataset already downloaded')
+        return
     print('Downloading dataset...')
     # Download from Google Drive
     gdown.download(f"https://drive.google.com/uc?export=download&confirm=pbef&id=1hTS8QJBuGdcppFAr_bvW2tsD9hW_ptr5")
@@ -210,10 +234,11 @@ def dummy(detectron2_datasets_path):
 
     ######################################
     ######################################
+def download_paxray(dataset_dir):
     ds_path = dataset_dir / 'paxray_dataset'
-    """
-    Downloads the dataset
-    """
+    if ds_path.exists():
+        print('Dataset already downloaded')
+        return
     print('Downloading dataset...')
     # Download from Google Drive
     # https://drive.google.com/file/d/19HPPhKf9TDv4sO3UV-nI3Jhi4nCv_Zyc/view?usp=share_link
@@ -223,10 +248,11 @@ def dummy(detectron2_datasets_path):
 
     ######################################
     ######################################
+def download_pst900(dataset_dir):
     ds_path = dataset_dir / 'PST900_RGBT_Dataset'
-    """
-    Downloads the dataset
-    """
+    if ds_path.exists():
+        print('Dataset already downloaded')
+        return
     print('Downloading dataset...')
     # Download from Google Drive
     # link: https://drive.google.com/open?id=1hZeM-MvdUC_Btyok7mdF00RV-InbAadm
@@ -236,11 +262,13 @@ def dummy(detectron2_datasets_path):
 
     ######################################
     ######################################
+def download_suim(dataset_dir):
     ds_path = dataset_dir / "SUIM"
-    """
-    Downloads the dataset
-    """
+    if ds_path.exists():
+        print('Dataset already downloaded')
+        return
     print('Downloading dataset...')
+    ds_path.mkdir(parents=True, exist_ok=True)
     # Downloading zip
     gdown.download(id='1diN3tNe2nR1eV3Px4gqlp6wp3XuLBwDy')
     os.system("unzip TEST.zip -d " + str(ds_path / 'test'))
@@ -253,11 +281,16 @@ def dummy(detectron2_datasets_path):
 
     ######################################
     ######################################
+def download_worldfloods(dataset_dir):
     ds_path = dataset_dir / 'WorldFloods'
+    if ds_path.exists():
+        print('Dataset already downloaded')
+        return
     print('Downloading dataset...')
     # Download from Google Drive
-    # https://drive.google.com/drive/folders/1Bp1FXppikOpQrgth2lu5WjpYX7Lb2qOW?usp=share_link
-    gdown.download_folder(id='1Bp1FXppikOpQrgth2lu5WjpYX7Lb2qOW', output=str(ds_path / 'test'))
+    gdown.download(id='11O6aKZk4R6DERIx32o4mMTJ5dtzRRKgV')
+    os.system(f"unzip worldfloods_v1_0_sample.zip -d {str(ds_path)}")
+    os.system("rm worldfloods_v1_0_sample.zip") 
 
     ######################################
     ######################################
@@ -273,12 +306,30 @@ def download_zerowaste(dataset_dir):
     os.system('rm zerowaste-f-final.zip')
 
 def download_everything(detectron2_datasets_path):
-    dataset_dir = Path(os.getenv('DETECTRON2_DATASETS', 'datasets')) if detectron2_datasets_path is None else Path(detectron2_datasets_path)
+    dsdir = Path(os.getenv('DETECTRON2_DATASETS', 'datasets')) if detectron2_datasets_path is None else Path(detectron2_datasets_path)
+    dsdir.mkdir(parents=True, exist_ok=True)
 
-    # change current directory to dataset_dir
-    os.chdir(dataset_dir)
+    # change current directory to dsdir
+    os.chdir(dsdir)
     # download
+    dataset_dir = Path()  # now the directory is the same
     download_zerowaste(dataset_dir)
+    download_worldfloods(dataset_dir)
+    download_suim(dataset_dir)
+    download_pst900(dataset_dir)
+    download_paxray(dataset_dir)
+    download_mhp(dataset_dir)
+    download_kvasir(dataset_dir)
+    download_isaid(dataset_dir)
+    download_foodseg(dataset_dir)
+    download_dram(dataset_dir)
+    download_deepcrack(dataset_dir)
+    download_darkzurich(dataset_dir)
+    download_cwfid(dataset_dir)
+    download_cub(dataset_dir)
+    download_corrosion(dataset_dir)
+    download_chase(dataset_dir)
+    download_atlantis(dataset_dir)
 
 
 
