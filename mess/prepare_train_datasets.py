@@ -7,8 +7,56 @@ import numpy as np
 from PIL import Image
 
 
+def prepare_suim(dataset_dir):
+    print('preparing suim dataset...')
+    ds_path = dataset_dir / 'SUIM'
+    assert ds_path.exists(), f'Dataset not found in {ds_path}'
+    if (ds_path / 'was_prepared').exists():
+        print('dataset already prepared!')
+        return
+
+    class_dict = {
+        (0, 0, 0): 0,  # BW
+        (0, 0, 255): 1,  # HD
+        (0, 255, 0): 2,  # PF
+        (0, 255, 255): 3,  # WR
+        (255, 0, 0): 4,  # RO
+        (255, 0, 255): 5,  # RI
+        (255, 255, 0): 6,  # FV
+        (255, 255, 255): 7,  # SR
+    }
+    for split in ['train', 'test']:
+        # create directories
+        anno_dir = ds_path / 'annotations_detectron2' / split
+        os.makedirs(anno_dir, exist_ok=True)
+
+        subdir = 'TEST' if split == 'test' else 'train_val'
+        for mask_path in tqdm.tqdm(sorted((ds_path / split / subdir / 'masks').glob('*.bmp'))):
+            # Open mask
+            mask = Image.open(mask_path)
+            mask = np.array(mask)
+
+            # Edit annotations using class_dict
+            mask = np.apply_along_axis(lambda x: class_dict[tuple(x)], 2, mask).astype(np.uint8)
+
+            # Save mask
+            Image.fromarray(mask).save(anno_dir / f'{mask_path.stem}.png', "PNG")
+
+        print(f'Saved {split} images and masks of {ds_path.name} dataset')
+    os.system(f"touch {ds_path / 'was_prepared'}")
+
+
+
+
+
 def prepare_worldfloods(dataset_dir):
     print('preparing worldfloods dataset...')
+    ds_path = dataset_dir / 'WorldFloods'
+    assert ds_path.exists(), f'Dataset not found in {ds_path}'
+    if (ds_path / 'was_prepared').exists():
+        print('dataset already prepared!')
+        return
+
     # normalization values for Sentinel 2 bands from:
     # https://gitlab.com/frontierdevelopmentlab/disaster-prevention/cubesatfloods/-/blob/master/data/worldfloods_dataset.py
     SENTINEL2_NORMALIZATION = np.array([
@@ -50,8 +98,6 @@ def prepare_worldfloods(dataset_dir):
 
 
 
-    ds_path = dataset_dir / 'WorldFloods'
-    assert ds_path.exists(), f'Dataset not found in {ds_path}.'
 
     for split in ['train', 'test']:
         # create directories
@@ -94,6 +140,7 @@ def prepare_worldfloods(dataset_dir):
                 Image.fromarray(tile).save(anno_dir / f'{id}_{i}.png')
 
         print(f'Saved {split} images and masks of {ds_path.name} dataset')
+    os.system(f"touch {ds_path / 'was_prepared'}")
 
 
 
@@ -102,7 +149,14 @@ def prepare_zerowaste(dataset_dir):
     print('preparing zerowaste dataset...')
     ds_path = dataset_dir / 'zerowaste-f'
     assert ds_path.exists(), f'Dataset not found in {ds_path}'
-    print('No preparation needed')
+    if (ds_path / 'was_prepared').exists():
+        print('dataset already prepared!')
+        return
+    
+    os.system(f"mv {ds_path / 'splits_final_deblurred'}/* {ds_path}/")
+    os.system(f"rm -r {ds_path / 'splits_final_deblurred'}")
+    os.system(f"touch {ds_path / 'was_prepared'}")
+
 
 
 
