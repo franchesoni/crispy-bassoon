@@ -170,6 +170,7 @@ def prepare_everything(detectron2_datasets_path):
 
     prepare_zerowaste(dataset_dir)
     prepare_worldfloods(dataset_dir)
+    prepare_suim(dataset_dir)
 
 if __name__ == '__main__':
     from fire import Fire
