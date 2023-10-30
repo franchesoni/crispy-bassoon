@@ -34,7 +34,7 @@ def prepare_suim(dataset_dir):
         for mask_path in tqdm.tqdm(sorted((ds_path / split / subdir / 'masks').glob('*.bmp'))):
             # Open mask
             mask = Image.open(mask_path)
-            mask = np.array(mask)
+            mask = ((np.array(mask) > 127) * 255).astype(np.uint8)
 
             # Edit annotations using class_dict
             mask = np.apply_along_axis(lambda x: class_dict[tuple(x)], 2, mask).astype(np.uint8)
