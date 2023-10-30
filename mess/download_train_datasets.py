@@ -3,16 +3,16 @@ from pathlib import Path
 
 import gdown
 
-"""This script downloads all the datasets that have a direct public download link and have training data. Train and test splits are preferred, if one is missing, val is used instead, if the two are missing, then we have no split and the dataset should be discarded."""
+"""This script downloads all the datasets that have a direct public download link and have training data. Train and test splits are preferred, if one is missing, val is used instead, if the two are missing, then we have no split and the dataset should be discarded. For chase, the train/test split is built at preparation. 
+- CryoNuSeg doesn't have a split, therefore it's discarded.
+- BDD100k doesn't have a public download link, therefore it's discarded.
+- floodnet doesn't have a public download link, therefore it's discarded.
+- postdam doesn't have a public download link, therefore it's discarded.
+- uavid doesn't have a public download link, therefore it's discarded.
+We end up with 17 datasets.
+"""
 
-def dummy(detectron2_datasets_path):
-    # dataset_dir = Path(os.getenv('DETECTRON2_DATASETS', 'datasets'))
-    dataset_dir = Path(detectron2_datasets_path)
-    # change current directory to dataset_dir
-    os.chdir(dataset_dir)
 
-    ######################################
-    ######################################
 def download_atlantis(dataset_dir):
     ds_path = dataset_dir / 'atlantis'
     if ds_path.exists():
@@ -25,8 +25,6 @@ def download_atlantis(dataset_dir):
     os.system('mv atlantisGit/atlantis ' + str(ds_path))
     os.system('rm -Rf atlantisGit')
 
-    ######################################
-    ######################################
 def download_chase(dataset_dir):
     ds_path = dataset_dir / 'CHASEDB1'
     if ds_path.exists():
