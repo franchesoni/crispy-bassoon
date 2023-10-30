@@ -1,5 +1,6 @@
 import os
 from pathlib import Path
+import json
 
 import tqdm
 import rasterio
@@ -8,6 +9,51 @@ from PIL import Image
 import matplotlib.pyplot as plt
 # Using 'inferno' color map for thermal images
 inferno_colormap = plt.get_cmap('inferno')
+
+def prepare_paxray(dataset_dir):
+    print('preparing paxray dataset...')
+    ds_path = dataset_dir / 'PaxRay'
+    assert ds_path.exists(), f'Dataset not found in {ds_path}'
+    if (ds_path / 'was_prepared').exists():
+        print('dataset already prepared!')
+        return
+
+    with open(ds_path / 'paxray.json', 'r') as f:
+        data = json.load(f)
+
+    # binary predictions because of overlapping masks
+    target_labels = {
+        0: 'lungs',
+        10: 'mediastinum',
+        24: 'bones',
+        163: 'diaphragm',
+    }
+
+    for split in ['train', 'test']:
+        # create directories
+        img_dir = ds_path / 'images_detectron2' / split
+        os.makedirs(img_dir, exist_ok=True)
+        anno_dir = ds_path / 'annotations_detectron2' / split
+        for label in target_labels.values():
+            (anno_dir / label).mkdir(parents=True, exist_ok=True)
+
+        for paths in tqdm.tqdm(data[split]):
+            # Copy image
+            img = Image.open(ds_path / paths['image'])
+            img = img.convert('RGB')
+            img.save(img_dir / paths['image'][7:])
+
+            # Open mask from .npy file
+            mask = np.load(ds_path / paths['target'])
+            # Save masks of each label separately for binary predictions
+            for idx, label in target_labels.items():
+                Image.fromarray(mask[idx].astype(np.uint8)).save(anno_dir / label / paths['image'][7:])
+
+        print(f'Saved {split} images and masks for {", ".join(target_labels.values())} of {ds_path.name} dataset')
+
+    os.system(f"touch {ds_path / 'was_prepared'}")
+
+
 
 def prepare_pst(dataset_dir):
     print('preparing pst900 dataset...')
@@ -201,6 +247,7 @@ def prepare_everything(detectron2_datasets_path):
     prepare_worldfloods(dataset_dir)
     prepare_suim(dataset_dir)
     prepare_pst(dataset_dir)
+    prepare_paxray(dataset_dir)
 
 if __name__ == '__main__':
     from fire import Fire
