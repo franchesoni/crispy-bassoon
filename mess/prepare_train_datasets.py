@@ -10,6 +10,40 @@ import matplotlib.pyplot as plt
 # Using 'inferno' color map for thermal images
 inferno_colormap = plt.get_cmap('inferno')
 
+def prepare_mhp(dataset_dir):
+    print('preparing mhp dataset...')
+    ds_path = dataset_dir / 'LV-MHP-v1'
+    assert ds_path.exists(), f'Dataset not found in {ds_path}'
+    if (ds_path / 'was_prepared').exists():
+        print('dataset already prepared!')
+        return
+    for split in ['train', 'test']:
+        # create directories
+        img_dir = ds_path / 'images_detectron2' / split
+        anno_dir = ds_path / 'annotations_detectron2' / split
+        img_dir().mkdir(parents=True, exist_ok=True)
+        anno_dir().mkdir(parents=True, exist_ok=True)
+
+        with open(ds_path / f'{split}_list.txt', 'r') as f:
+            ids = f.read().splitlines()
+            if split == 'train':
+                ids = ids[:3000]  # as in original mess code
+
+        for id in tqdm.tqdm(ids):
+            # Move image
+            img = Image.open(ds_path / 'images' / f'{id}.jpg')
+            img = img.convert('RGB')
+            img.save(img_dir / f'{id}.jpg')
+
+            # Load all masks
+            mask_paths = (ds_path / 'annotations').glob(f'{id}*.png')
+            mask = np.stack([np.array(Image.open(mask_path)) for mask_path in mask_paths])
+            # Save mask
+            Image.fromarray(mask).save(anno_dir / f'{id}.png')
+
+        print(f'Saved {split} images and masks of {ds_path.name} dataset')
+    os.system(f"touch {ds_path / 'was_prepared'}")
+
 def prepare_paxray(dataset_dir):
     print('preparing paxray dataset...')
     ds_path = dataset_dir / 'PaxRay'
