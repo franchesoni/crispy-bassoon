@@ -3,9 +3,11 @@ from pathlib import Path
 
 import gdown
 
-def download_everything(detectron2_datasets_path):
+def dummy(detectron2_datasets_path):
     # dataset_dir = Path(os.getenv('DETECTRON2_DATASETS', 'datasets'))
     dataset_dir = Path(detectron2_datasets_path)
+    # change current directory to dataset_dir
+    os.chdir(dataset_dir)
 
     ######################################
     ######################################
@@ -144,6 +146,8 @@ def download_everything(detectron2_datasets_path):
     os.system('unzip -P LARCdataset9947 FoodSeg103.zip -d ' + str(ds_path))
     os.system('rm FoodSeg103.zip')
 
+
+
     ######################################
     ######################################
     ds_path = dataset_dir / 'isaid'
@@ -157,6 +161,19 @@ def download_everything(detectron2_datasets_path):
     gdown.download_folder(id='1jlVr4ClmeBA01IQYx7Aq3Scx2YS1Bmpb', output=str(ds_path))
     os.system(f'unzip {ds_path / "images.zip"} -d {ds_path / "raw_val"}')
     os.system(f'rm {ds_path / "images.zip"}')
+
+    # train images
+    gdown.download_folder(id='1MvSH7sNaY4p4lhwAU_BG3y7zth6-rtrD', output='tmp')
+
+# https://drive.google.com/drive/folders/1MvSH7sNaY4p4lhwAU_BG3y7zth6-rtrD?usp=sharing
+# https://drive.google.com/file/d/1pEmwJtugIWhiwgBqOtplNUtTG2T454zn/view?usp=drive_link, https://drive.google.com/file/d/1JBWCHdyZOd9ULX0ng5C9haAt3FMPXa3v/view?usp=drive_link, https://drive.google.com/file/d/1BlaGYNNEKGmT6OjZjsJ8HoUYrTTmFcO2/view?usp=drive_link
+
+# semantic masks
+# https://drive.google.com/file/d/1YLjZ1cmA9PH3OfzMF-eq6T-O9FTGvSrx/view?usp=drive_link
+
+
+
+
 
     ######################################
     ######################################
@@ -174,6 +191,10 @@ def download_everything(detectron2_datasets_path):
     os.system(f"tar -xvzf {ds_path}/masks.tar.gz -C {ds_path}")
     os.system(f"rm {ds_path}/images.tar.gz")
     os.system(f"rm {ds_path}/masks.tar.gz")
+
+# wget --header="Host: storage.googleapis.com" --header="User-Agent: Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/118.0.0.0 Safari/537.36 Edg/118.0.2088.69" --header="Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7" --header="Accept-Language: en,es-419;q=0.9,es;q=0.8,fr;q=0.7,pt-BR;q=0.6,pt;q=0.5" --header="Cookie: _ga=GA1.3.2046005398.1697120548; _ga_L31B3DX5TC=GS1.1.1697120548.1.1.1697120586.0.0.0" --header="Connection: keep-alive" "https://storage.googleapis.com/cos-osf-prod-files-us/9a90c143c7cc7642ada45f607b74fb45fb498c981d1064893f1bbc4b8b1b49fe?response-content-disposition=attachment%3B%20filename%3D%22files_used_for_testing.txt%22%3B%20filename%2A%3DUTF-8%27%27files_used_for_testing.txt&GoogleAccessId=files-us%40cos-osf-prod.iam.gserviceaccount.com&Expires=1698671096&Signature=FKdGRNfZK9w%2BOp%2F%2BUxtx3LM%2BJWpWOj9H2bPjdOZ0GQ2kKw6YftynexTwJQBYcnbOtBB4hXeC76km3leZoyv3eCMKKOMkVqvwTl%2BJ2%2FDeICMHnT0D3ZwyzBrlFDQmngrAiJWn8cO4u3nUZzukOpbRBZk04T7WtnRbs2fuzGVn0N5cdpuWICFuyoJCfb6isCwmrT61LtN%2FifrEqZjCQn3tuVPKRtTyXVVs8Z6msNBWG6%2BtGtPRWkYxPWVQL%2BwmfYyLTLCYOhMcJ5KvT24ENi3S9sfbIYAEkQohjS8vdveEd9Is3kcv8sBQa3vs0WpBUmjZ8ST0nkP70yMmjw55I9qcgQ%3D%3D" -c -O 'files_used_for_testing.txt'
+
+# wget --header="Host: storage.googleapis.com" --header="User-Agent: Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/118.0.0.0 Safari/537.36 Edg/118.0.2088.69" --header="Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7" --header="Accept-Language: en,es-419;q=0.9,es;q=0.8,fr;q=0.7,pt-BR;q=0.6,pt;q=0.5" --header="Cookie: _ga=GA1.3.2046005398.1697120548; _ga_L31B3DX5TC=GS1.1.1697120548.1.1.1697120586.0.0.0" --header="Connection: keep-alive" "https://storage.googleapis.com/cos-osf-prod-files-us/42f066dabc92d071e9a7418c1817d0a760e7f998d483a6729b627ba6356b3851?response-content-disposition=attachment%3B%20filename%3D%22files_used_for_training.txt%22%3B%20filename%2A%3DUTF-8%27%27files_used_for_training.txt&GoogleAccessId=files-us%40cos-osf-prod.iam.gserviceaccount.com&Expires=1698671177&Signature=psQUhQQgHlEJWiMDfPMVpD3pr7vlVOccpU%2FXDn44Ub%2B5g1s2aaXgeHOOmnPlw2e%2FD9%2BGmDb9WUrbzNw4fS9ylr4%2Br5A%2BdslgiH7irxNyjUfwZ8dBkjCynExLJHAT%2BWT9uFNtbSzE0fARicy17T9g%2F2yxvCex3%2Fk6eIbsb99wySHMRULfi7X5vZYgkwopSADZ5%2FFXDKSpGN4QGZLLhYBZ%2F0bSXzNA8R87HxQ7AvNy%2FPH%2FbLsLtn58nkqVUs8ML42UNZngaeLyCvIGg9ITHyZjaSYZYlL%2FCpRg4MkKpztdDFeC8RR%2BLgCea%2BHMm8qPaTFCgPyOhY8E4jGztUeuWN5D0w%3D%3D" -c -O 'files_used_for_training.txt'
 
     ######################################
     ######################################
@@ -240,15 +261,25 @@ def download_everything(detectron2_datasets_path):
 
     ######################################
     ######################################
+def download_zerowaste(dataset_dir):
     ds_path = dataset_dir / 'zerowaste-f'
-    """
-    Downloads the dataset
-    """
+    if ds_path.exists():
+        print('Dataset already downloaded')
+        return
     print('Downloading dataset...')
     # Downloading zip
     os.system('wget https://zenodo.org/record/6412647/files/zerowaste-f-final.zip')
     os.system('unzip zerowaste-f-final.zip -d ' + str(ds_path))
     os.system('rm zerowaste-f-final.zip')
+
+def download_everything(detectron2_datasets_path):
+    dataset_dir = Path(os.getenv('DETECTRON2_DATASETS', 'datasets')) if detectron2_datasets_path is None else Path(detectron2_datasets_path)
+
+    # change current directory to dataset_dir
+    os.chdir(dataset_dir)
+    # download
+    download_zerowaste(dataset_dir)
+
 
 
 if __name__ == '__main__':
