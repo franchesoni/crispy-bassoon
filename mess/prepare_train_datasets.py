@@ -10,6 +10,37 @@ import matplotlib.pyplot as plt
 # Using 'inferno' color map for thermal images
 inferno_colormap = plt.get_cmap('inferno')
 
+def prepare_kvasir(dataset_dir):
+    print('preparing kvasir dataset...')
+    ds_path = dataset_dir / 'kvasir-instrument'
+    assert ds_path.exists(), f'Dataset not found in {ds_path}'
+    if (ds_path / 'was_prepared').exists():
+        print('dataset already prepared!')
+        return
+    
+    for split in ['train', 'test']:
+        img_dir = ds_path / 'images_detectron2' / split
+        anno_dir = ds_path / 'annotations_detectron2' / split
+        img_dir.mkdir(parents=True, exist_ok=True)
+        anno_dir.mkdir(parents=True, exist_ok=True)
+
+        with open(ds_path / f'{split}.txt', 'r') as f:
+            ids = [line.rstrip() for line in f]
+
+        for id in tqdm.tqdm(ids):
+            img = Image.open(ds_path / f'images/{id}.jpg').convert('RGB')
+            img.save(img_dir / f'{id}.png', "PNG")
+
+            mask = Image.open(ds_path / f'masks/{id}.png')
+            # 0: others, 1: instrument
+            mask = np.uint8(np.array(mask)[:,:,0] / 255)
+            Image.fromarray(mask).save(anno_dir / f'{id}.png', "PNG")
+        
+        print(f'Saved {split} images and masks of kvasir-instrument dataset')
+    os.system(f"touch {ds_path / 'was_prepared'}")
+
+
+
 def prepare_mhp(dataset_dir):
     print('preparing mhp dataset...')
     ds_path = dataset_dir / 'LV-MHP-v1'
