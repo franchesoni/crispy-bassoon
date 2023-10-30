@@ -141,6 +141,8 @@ def prepare_suim(dataset_dir):
 
         subdir = 'TEST' if split == 'test' else 'train_val'
         for mask_path in tqdm.tqdm(sorted((ds_path / split / subdir / 'masks').glob('*.bmp'))):
+            if (anno_dir / f'{mask_path.stem}.png').exists():
+                continue  # allow resume
             # Open mask
             mask = Image.open(mask_path)
             mask = ((np.array(mask) > 127) * 255).astype(np.uint8)
