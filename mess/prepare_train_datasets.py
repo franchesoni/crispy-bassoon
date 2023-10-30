@@ -46,7 +46,7 @@ def prepare_mhp(dataset_dir):
 
 def prepare_paxray(dataset_dir):
     print('preparing paxray dataset...')
-    ds_path = dataset_dir / 'PaxRay'
+    ds_path = dataset_dir / 'paxray_dataset'
     assert ds_path.exists(), f'Dataset not found in {ds_path}'
     if (ds_path / 'was_prepared').exists():
         print('dataset already prepared!')
