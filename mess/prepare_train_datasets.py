@@ -5,6 +5,35 @@ import tqdm
 import rasterio
 import numpy as np
 from PIL import Image
+import matplotlib.pyplot as plt
+# Using 'inferno' color map for thermal images
+inferno_colormap = plt.get_cmap('inferno')
+
+def prepare_pst(dataset_dir):
+    print('preparing pst900 dataset...')
+    ds_path = dataset_dir / 'PST900_RGBT_Dataset'
+    assert ds_path.exists(), f'Dataset not found in {ds_path}'
+    if (ds_path / 'was_prepared').exists():
+        print('dataset already prepared!')
+        return
+    
+    for split in ['train', 'test']:
+        # create directories
+        thermal_dir = ds_path / split / 'thermal_pseudo'
+        os.makedirs(thermal_dir, exist_ok=True)
+
+        for img_path in tqdm.tqdm((ds_path / split / 'thermal').glob('*.png')):
+            # Open image
+            img = Image.open(img_path)
+            # Change thermal gray scale to pseudo color
+            img = inferno_colormap(np.array(img)) * 255
+            img = img.astype(np.uint8)[:, :, :3]
+            # Save thermal pseudo color image
+            Image.fromarray(img).save(thermal_dir / img_path.name)
+
+        print(f'Saved images and masks of {ds_path.name} dataset for {split} split')
+    os.system(f"touch {ds_path / 'was_prepared'}")
+
 
 
 def prepare_suim(dataset_dir):
@@ -171,6 +200,7 @@ def prepare_everything(detectron2_datasets_path):
     prepare_zerowaste(dataset_dir)
     prepare_worldfloods(dataset_dir)
     prepare_suim(dataset_dir)
+    prepare_pst(dataset_dir)
 
 if __name__ == '__main__':
     from fire import Fire
