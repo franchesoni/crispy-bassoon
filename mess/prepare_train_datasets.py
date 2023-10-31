@@ -10,6 +10,407 @@ import matplotlib.pyplot as plt
 # Using 'inferno' color map for thermal images
 inferno_colormap = plt.get_cmap('inferno')
 
+def prepare_atlantis(dataset_dir):
+    print('preparing atlantis dataset...')
+    ds_path = dataset_dir / 'atlantis'
+    assert ds_path.exists(), f'Dataset not found in {ds_path}'                   
+    if (ds_path / 'was_prepared').exists():
+        print('dataset already prepared!')
+        return
+
+    color_to_class = {c: i for i, c in enumerate(range(1, 57))}
+    color_to_class[0] = 255
+
+    for split in ['train', 'test']:
+        # create directories
+        img_dir = ds_path / 'images_detectron2' / split
+        anno_dir = ds_path / 'annotations_detectron2' / split
+        os.makedirs(img_dir, exist_ok=True)
+        os.makedirs(anno_dir, exist_ok=True)
+
+        for img_path in tqdm.tqdm((ds_path / 'images' / split).glob('*/*.jpg')):
+            # Load and convert image and mask
+            img = Image.open(img_path)
+            img = img.convert('RGB')
+            img.save(img_dir / img_path.name)
+
+            mask = Image.open(str(img_path).replace('images', 'masks').replace('jpg', 'png'))
+            # Replace grey values with class index
+            mask = np.vectorize(color_to_class.get)(np.array(mask)).astype(np.uint8)
+            Image.fromarray(mask).save(anno_dir / img_path.name.replace('jpg', 'png'))
+        print(f'Saved images and masks of {ds_path.name} dataset for {split} split')
+    os.system(f"touch {ds_path / 'was_prepared'}")
+
+
+
+def prepare_chase(dataset_dir):
+    print('preparing chase dataset...')
+    ds_path = dataset_dir / 'CHASE_DB1'
+    assert ds_path.exists(), f'Dataset not found in {ds_path}'
+    if (ds_path / 'was_prepared').exists():
+        print('chase dataset already prepared!')
+        return
+
+    TRAIN_LEN = 8
+    for split in ['train', 'test']:
+        # create directories
+        img_dir = ds_path / 'images_detectron2' / split
+        anno_dir = ds_path / 'annotations_detectron2' / split
+        os.makedirs(img_dir, exist_ok=True)
+        os.makedirs(anno_dir, exist_ok=True)
+
+        for i, img_path in tqdm.tqdm(enumerate(sorted((ds_path).glob('*.jpg')))):
+            if (i < TRAIN_LEN and split == 'test') or (i >= TRAIN_LEN and split == 'train'):
+                continue
+
+            # Move image
+            img = Image.open(img_path)
+            img = img.convert('RGB')
+            img.save(img_dir / img_path.name)
+
+            # Open mask
+            id = img_path.stem
+            mask = Image.open(ds_path / f'{id}_1stHO.png')
+            # Edit annotations
+            # Binary encoding: (0, 255) -> (0, 1)
+            mask = np.array(mask).astype(np.uint8)
+            # Save mask
+            Image.fromarray(mask).save(anno_dir / f'{id}.png')
+
+        print(f'Saved {split} images and masks of {ds_path.name} dataset')
+
+
+
+def prepare_corrosion(dataset_dir):
+    print('preparing corrosion dataset...')
+    ds_path = dataset_dir / 'Corrosion Condition State Classification'
+    assert ds_path.exists(), f'Dataset not found in {ds_path}'
+    if (ds_path / 'was_prepared').exists():
+        print('corrosion dataset already prepared!')
+        return
+
+    for split in ['Train', 'Test']:
+        for mask_path in tqdm.tqdm(sorted(ds_path.glob(f'original/{split}/masks/*.png'))):
+            # Open mask
+            mask = np.array(Image.open(mask_path))
+            # 'Portable network graphics' format, so no further processing needed
+            # Save mask
+            Image.fromarray(mask).save(mask_path)
+        print(f'Saved images and masks of {ds_path.name} dataset for {split} split')
+    os.system(f"touch {ds_path / 'was_prepared'}")
+
+def prepare_cub200(dataset_dir):
+    print('preparing cub_200 dataset...')
+    ds_path = dataset_dir / 'CUB_200_2011'
+    assert ds_path.exists(), f'Dataset not found in {ds_path}'
+    if (ds_path / 'was_prepared').exists():
+        print('cub_200 dataset already prepared!')
+        return
+
+
+    # read image file names
+    with open(ds_path / 'images.txt', 'r') as f:
+        img_files = [i.split(' ')[1] for i in f.read().splitlines()]
+
+    # read test image list
+    with open(ds_path / 'train_test_split.txt', 'r') as f:
+        test_images = [not bool(int(i.split(' ')[1])) for i in f.read().splitlines()]
+    
+    for split in ['train', 'test']:
+        # create directories
+        img_dir = ds_path / 'images_detectron2' / split
+        anno_dir = ds_path / 'annotations_detectron2' / split
+        os.makedirs(img_dir, exist_ok=True)
+        os.makedirs(anno_dir, exist_ok=True)
+
+        if split == 'test':
+            img_files = np.array(img_files)[test_images]
+        else:
+            img_files = np.array(img_files)[~np.array(test_images)]
+
+        # iterate over all image files
+        for img_file in tqdm.tqdm(img_files):
+            img_name = img_file.split('/')[-1]
+            # Copy image
+            img = Image.open(ds_path / 'images' / img_file)
+            img = img.convert('RGB')
+            img.save(img_dir / img_name)
+
+            # Open mask
+            img_name = img_name.replace('jpg', 'png')
+            mask = Image.open(str(ds_path / 'segmentations' / img_file.replace('jpg', 'png'))).convert('L')
+
+            # Edit annotations
+            # Using majority voting from 5 labelers to get binary mask
+            bin_mask = np.uint8(np.array(mask) > 128)
+            # Replace mask with class index
+            class_idx = int(img_file.split('.')[0])
+            mask = bin_mask * class_idx
+            # Save normal mask
+            Image.fromarray(mask, 'L').save(anno_dir / img_name, "PNG")
+
+        print(f'Saved {split} images and masks of {ds_path.name} dataset')
+    os.system(f"touch {ds_path / 'was_prepared'}")
+
+
+
+
+def prepare_cwfid(dataset_dir):
+
+    print('preparing cwfid dataset...')
+    ds_path = dataset_dir / 'cwfid'
+    assert ds_path.exists(), f'Dataset not found in {ds_path}'
+    if (ds_path / 'was_prepared').exists():
+        print('cwfid dataset already prepared!')
+        return
+
+    train_ids = [2, 5, 6, 7, 8, 11, 12, 14, 16, 17, 18, 19, 20, 23, 24, 25, 27, 28, 31, 33, 34, 36, 37, 38, 40, 41, 42, 43,
+                45, 46, 49, 50, 51, 52, 53, 55, 56, 57, 58, 59]
+    test_ids = [1, 3, 4, 9, 10, 13, 15, 21, 22, 26, 28, 29, 30, 32, 35, 39, 44, 47, 48, 54, 60]
+    for split in ['train', 'test']:
+        anno_dir = ds_path / 'annotations_detectron2' / split
+        os.makedirs(anno_dir, exist_ok=True)
+
+        ids = test_ids if split == 'test' else train_ids
+        for id in tqdm.tqdm(ids):
+            # get mask path
+            mask_path = ds_path / 'annotations' / f'{id:03}_annotation.png'
+            # Open mask
+            mask = np.array(Image.open(mask_path))
+
+            # Edit annotations
+            color_to_class = {0: [0, 0, 0], 1: [255, 0, 0], 2: [0, 255, 0]}
+            # Map RGB values to class index by converting to grayscale and applying a lookup table
+            for class_idx, rgb in color_to_class.items():
+                mask[(mask == rgb).all(axis=-1)] = class_idx
+            mask = mask[:, :, 0]
+
+            # Save mask
+            Image.fromarray(mask).save(anno_dir / mask_path.name)
+
+        print(f'Saved {split} images and masks of {ds_path.name} dataset')
+    os.system(f"touch {ds_path / 'was_prepared'}")
+
+
+
+def prepare_darkzurich(dataset_dir):
+    print('preparing darkzurich dataset...')
+    ds_path = dataset_dir / 'Dark_Zurich'
+    assert ds_path.exists(), f'Dataset not found in {ds_path}'
+    if (ds_path / 'was_prepared').exists():
+        print('dataset already prepared!')
+        return
+    
+    DARK_ZURICH_LABELS = (0, 7, 8, 11, 12, 13, 17, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 31, 32, 33)
+    labels_to_id = {label: i for i, label in enumerate(DARK_ZURICH_LABELS)}
+    labels_to_id[255] = 255
+
+    for split in ['train', 'val']:
+        mask_dir = Path(ds_path) / f'gt/{split}/night/GOPR0356'
+        anno_dir = Path(ds_path) / 'annotations_detectron2' / split
+        anno_dir.mkdir(parents=True, exist_ok=True)
+
+        # convert the masks to detectron2 format
+        for mask_path in tqdm.tqdm(list(mask_dir.glob('*labelIds.png'))):
+            mask = np.array(Image.open(mask_path))
+            # invalid pixels are marked with 255
+            invalid_mask = np.array(Image.open(str(mask_path).replace('labelIds', 'invGray')))
+            mask[invalid_mask == 255] = 255
+            # convert to ids
+            mask = np.vectorize(labels_to_id.get)(mask)
+            # save the mask
+            Image.fromarray(mask.astype(np.uint8)).save(anno_dir / mask_path.name)
+
+        print(f'Saved {split} images and masks of {ds_path.name} dataset')
+    os.system(f"touch {ds_path / 'was_prepared'}")
+
+def prepare_deepcrack(dataset_dir):
+    print('preparing dram dataset...')
+    ds_path = dataset_dir / 'DeepCrack'
+    assert ds_path.exists(), f'Dataset not found in {ds_path}'
+    if (ds_path / 'was_prepared').exists():
+        print('dataset already prepared!')
+        return
+
+    for split in ['train', 'test']:
+        # create directories
+        anno_dir = ds_path / 'annotations_detectron2' / split
+        os.makedirs(anno_dir, exist_ok=True)
+
+        for mask_path in tqdm.tqdm((ds_path / f'{split}_lab').glob('*.png')):
+            # Open mask
+            mask = Image.open(mask_path)
+            # Edit annotations
+            # Binary encoding: (0, 255) -> (0, 1)
+            mask = np.uint8(np.array(mask) / 255)
+            # Save mask
+            Image.fromarray(mask).save(anno_dir / mask_path.name)
+
+        print(f'Saved {split} images and masks of {ds_path.name} dataset')
+    os.system(f"touch {ds_path / 'was_prepared'}")
+
+
+def prepare_dram(dataset_dir):
+    print('preparing dram dataset...')
+    ds_path = dataset_dir / 'DRAM_processed' / 'DRAM_processed'
+    assert ds_path.exists(), f'Dataset not found in {ds_path}'
+    if (ds_path / 'was_prepared').exists():
+        print('dataset already prepared!')
+        return
+
+    vocId_to_classId = {
+        0: 11,  # background
+        1: 11,  # aeroplane
+        2: 11,  # bicycle
+        3: 0,  # bird
+        4: 1,  # boat
+        5: 2,  # bottle
+        6: 11,  # bus
+        7: 11,  # car
+        8: 3,  # cat
+        9: 4,  # chair
+        10: 5,  # cow
+        11: 11,  # diningtable
+        12: 6,  # dog
+        13: 7,  # horse
+        14: 11,  # motorbike
+        15: 8,  # person
+        16: 9,  # pottedplant
+        17: 10,  # sheep
+        18: 11,  # sofa
+        19: 11,  # train
+        20: 11,  # tvmonitor
+        255: 255,  # ignore value
+    }
+
+    for split in ['train', 'test']:
+        # create directories
+        img_dir = ds_path / 'images_detectron2' / split
+        anno_dir = ds_path / 'annotations_detectron2' / split
+        img_dir.mkdir(parents=True, exist_ok=True)
+        anno_dir.mkdir(parents=True, exist_ok=True)
+
+        for img_path in tqdm.tqdm(sorted((ds_path / split ).glob('**/*.jpg'))):
+            img = Image.open(img_path)
+            img = img.convert('RGB')
+            # Add artist name to handle avoid duplicate file names
+            img.save(img_dir / (img_path.parent.name + '_' + img_path.name))
+
+            mask = Image.open(str(img_path).replace(split, 'labels').replace('.jpg', '.png'))
+            # Convert to detectron2 format
+            mask = np.vectorize(vocId_to_classId.get)(np.array(mask)).astype(np.uint8)
+            Image.fromarray(mask).save(anno_dir / (img_path.parent.name + '_' + img_path.name.replace('.jpg', '.png')))
+
+        print(f'Saved {split} images and masks of {ds_path.name} dataset')
+    os.system(f"touch {ds_path / 'was_prepared'}")
+
+
+
+
+
+
+
+
+
+
+    
+
+
+def prepare_foodseg(dataset_dir):
+    print('preparing foodseg dataset...')
+    ds_path = dataset_dir / 'FoodSeg103'
+    assert ds_path.exists(), f'Dataset not found in {ds_path}'
+    if (ds_path / 'was_prepared').exists():
+        print('dataset already prepared!')
+        return
+    os.system(f"touch {ds_path / 'was_prepared'}")
+
+
+def prepare_isaid(dataset_dir):
+    # iSAID dataset color to class mapping
+    color_to_class = {0: [0, 0, 0],  # unlabeled
+                    1: [0, 0, 63],  # ship
+                    2: [0, 63, 63],  # storage_tank
+                    3: [0, 63, 0],  # baseball_diamond
+                    4: [0, 63, 127],  # tennis_court
+                    5: [0, 63, 191],  # basketball_court
+                    6: [0, 63, 255],  # Ground_Track_Field
+                    7: [0, 127, 63],  # Bridge
+                    8: [0, 127, 127],  # Large_Vehicle
+                    9: [0, 0, 127],  # Small_Vehicle
+                    10: [0, 0, 191],  # Helicopter
+                    11: [0, 0, 255],  # Swimming_pool
+                    12: [0, 191, 127],  # Roundabout
+                    13: [0, 127, 191],  # Soccer_ball_field
+                    14: [0, 127, 255],  # plane
+                    15: [0, 100, 155],  # Harbor
+                    }
+
+    def get_tiles(input, h_size=1024, w_size=1024, padding=0):
+        input = np.array(input)
+        h, w = input.shape[:2]
+        tiles = []
+        for i in range(0, h, h_size):
+            for j in range(0, w, w_size):
+                tile = input[i:i + h_size, j:j + w_size]
+                if tile.shape[:2] == [h_size, w_size]:
+                    tiles.append(tile)
+                else:
+                    # padding
+                    if len(tile.shape) == 2:
+                        # Mask (2 channels, padding with ignore_value)
+                        padded_tile = np.ones((h_size, w_size), dtype=np.uint8) * padding
+                    else:
+                        # RGB (3 channels, padding usually 0)
+                        padded_tile = np.ones((h_size, w_size, tile.shape[2]), dtype=np.uint8) * padding
+                    padded_tile[:tile.shape[0], :tile.shape[1]] = tile
+                    tiles.append(padded_tile)
+        return tiles
+
+
+
+
+
+    print('preparing isaid dataset...')
+    ds_path = dataset_dir / 'isaid'
+    assert ds_path.exists(), f'Dataset not found in {ds_path}'
+    if (ds_path / 'was_prepared').exists():
+        print('dataset already prepared!')
+        return
+
+    for split in ['train', 'val']:
+        assert (ds_path / f'{split}_images').exists(),f'Raw {split} images not found in {ds_path / f"{split}_images"}'
+        # create directories
+        img_dir = ds_path / 'images_detectron2' / split
+        anno_dir = ds_path / 'annotations_detectron2' / split
+        img_dir.mkdir(parents=True, exist_ok=True)
+        anno_dir.mkdir(parents=True, exist_ok=True)
+
+        # Convert annotations to detectron2 format
+        for mask_path in tqdm.tqdm(sorted((ds_path / f"{split}_masks" / "images").glob("*.png"))):
+            file = mask_path.name
+            id = file.split('_')[0]
+            # Open image
+            img = Image.open(ds_path / f'{split}_images' / "images" / f'{id}.png')
+            # Open mask
+            mask = np.array(Image.open(mask_path))
+            # Map RGB values to class index by applying a lookup table
+            for class_idx, rgb in color_to_class.items():
+                mask[(mask == rgb).all(axis=-1)] = class_idx
+            mask = mask[:, :, 0]  # remove channel dimension
+
+            # get tiles
+            img_tiles = get_tiles(img, padding=0)
+            mask_tiles = get_tiles(mask, padding=255)
+            # save tiles
+            for i, (img_tile, mask_tile) in enumerate(zip(img_tiles, mask_tiles)):
+                Image.fromarray(img_tile).save(img_dir / f'{id}_{i}.png')
+                Image.fromarray(mask_tile).save(anno_dir / f'{id}_{i}.png')
+        
+        print(f'Saved {split} images and masks of {ds_path.name} dataset')
+    os.system(f"touch {ds_path / 'was_prepared'}")
+
+
 def prepare_kvasir(dataset_dir):
     print('preparing kvasir dataset...')
     ds_path = dataset_dir / 'kvasir-instrument'
@@ -318,6 +719,17 @@ def prepare_everything(detectron2_datasets_path):
     prepare_pst(dataset_dir)
     prepare_paxray(dataset_dir)
     prepare_mhp(dataset_dir)
+    # prepare_kvasir(dataset_dir)
+    # prepare_isaid(dataset_dir)
+    # prepare_foodseg(dataset_dir)
+    # prepare_dram(dataset_dir)
+    # prepare_deepcrack(dataset_dir)
+    # prepare_darkzurich(dataset_dir)
+    # prepare_cwfid(dataset_dir)
+    # prepare_cub200(dataset_dir)
+    # prepare_corrosion(dataset_dir)
+    # prepare_chase(dataset_dir)
+    # prepare_atlantis(dataset_dir)
 
 if __name__ == '__main__':
     from fire import Fire
