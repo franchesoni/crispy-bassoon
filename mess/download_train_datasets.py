@@ -48,6 +48,7 @@ def download_corrosion(dataset_dir):
     # Downloading zip
     os.system('wget https://figshare.com/ndownloader/files/31729733')
     os.system('unzip 31729733 -d ' + str(dataset_dir))
+    os.system(f'mv "{str(dataset_dir / "Corrosion Condition State Classification")}" "{str(ds_path)}"')
     os.system('rm 31729733')
 
     ######################################
