@@ -14,7 +14,7 @@ from . import (
     # register_cryonuseg,
     register_isaid,
     # register_bdd100k,
-    register_dark_zurich,
+    # register_dark_zurich,
     register_foodseg,
     register_atlantis,
     # register_dram,
