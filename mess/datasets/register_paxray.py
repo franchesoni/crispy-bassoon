@@ -19,6 +19,12 @@ def register_dataset(root):
         ('test_mediastinum', 'images_detectron2/test', 'annotations_detectron2/test/mediastinum', MEDIANSTINUM),
         ('test_bones', 'images_detectron2/test', 'annotations_detectron2/test/bones', BONES),
         ('test_diaphragm', 'images_detectron2/test', 'annotations_detectron2/test/diaphragm', DIAPHRAGM),
+
+        ('train_lungs', 'images_detectron2/train', 'annotations_detectron2/train/lungs', LUNGS),
+        ('train_mediastinum', 'images_detectron2/train', 'annotations_detectron2/train/mediastinum', MEDIANSTINUM),
+        ('train_bones', 'images_detectron2/train', 'annotations_detectron2/train/bones', BONES),
+        ('train_diaphragm', 'images_detectron2/train', 'annotations_detectron2/train/diaphragm', DIAPHRAGM),
+
     ]:
         image_dir = os.path.join(root, image_dirname)
         gt_dir = os.path.join(root, sem_seg_dirname)

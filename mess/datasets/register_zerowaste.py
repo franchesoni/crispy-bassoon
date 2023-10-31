@@ -20,6 +20,7 @@ def register_dataset(root):
 
     for split, image_dirname, sem_seg_dirname, class_names in [
         ('test', 'splits_final_deblurred/test/data', 'splits_final_deblurred/test/sem_seg', CLASSES),
+        ('train', 'splits_final_deblurred/train/data', 'splits_final_deblurred/train/sem_seg', CLASSES),
     ]:
         image_dir = os.path.join(root, image_dirname)
         gt_dir = os.path.join(root, sem_seg_dirname)

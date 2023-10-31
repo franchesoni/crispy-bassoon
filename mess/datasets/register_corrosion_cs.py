@@ -28,11 +28,12 @@ CLASSES_OFFICIAL = (
 
 def register_dataset(root):
     ds_name = 'corrosion_cs'
-    root = os.path.join(root, 'Corrosion Condition State Classification')
+    root = os.path.join(root, 'CorrosionConditionStateClassification')
 
     for split, image_dirname, sem_seg_dirname, class_names in [
         ('test', 'original/Test/images', 'original/Test/masks', CLASSES),
-        ('test_official', 'original/Test/images', 'original/Test/masks', CLASSES_OFFICIAL),
+        ('train', 'original/Train/images', 'original/Train/masks', CLASSES),
+        # ('test_official', 'original/Test/images', 'original/Test/masks', CLASSES_OFFICIAL),
     ]:
         image_dir = os.path.join(root, image_dirname)
         gt_dir = os.path.join(root, sem_seg_dirname)

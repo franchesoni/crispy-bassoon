@@ -27,9 +27,10 @@ def register_dataset(root):
 
     for split, image_dirname, sem_seg_dirname, class_names in [
         ('test', 'test/thermal', 'test/labels', CLASSES),
-        ('test_official', 'test/thermal', 'test/labels', CLASSES_OFFICAL),
-        ('test_pseudo', 'test/thermal_pseudo', 'test/labels', CLASSES),
-        ('test_rgb', 'test/rgb', 'test/labels', CLASSES),
+        ('train', 'train/thermal', 'train/labels', CLASSES),
+        # ('test_official', 'test/thermal', 'test/labels', CLASSES_OFFICAL),
+        # ('test_pseudo', 'test/thermal_pseudo', 'test/labels', CLASSES),
+        # ('test_rgb', 'test/rgb', 'test/labels', CLASSES),
     ]:
         image_dir = os.path.join(root, image_dirname)
         gt_dir = os.path.join(root, sem_seg_dirname)

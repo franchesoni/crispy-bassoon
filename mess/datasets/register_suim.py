@@ -21,7 +21,8 @@ def register_dataset(root):
     root = os.path.join(root, 'SUIM')
 
     for split, image_dirname, sem_seg_dirname, class_names in [
-        ('test', 'TEST/images', 'annotations_detectron2/test', CLASSES),
+        ('test', 'test/TEST/images', 'annotations_detectron2/test', CLASSES),
+        ('train', 'train/train_val/images', 'annotations_detectron2/train', CLASSES),
     ]:
         image_dir = os.path.join(root, image_dirname)
         gt_dir = os.path.join(root, sem_seg_dirname)

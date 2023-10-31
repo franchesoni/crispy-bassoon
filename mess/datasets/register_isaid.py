@@ -49,7 +49,8 @@ def register_dataset(root):
     root = os.path.join(root, 'isaid')
     for split, image_dirname, sem_seg_dirname, class_names in [
         ('val', 'images_detectron2/val', 'annotations_detectron2/val', CLASSES),
-        ('val_official', 'images_detectron2/val', 'annotations_detectron2/val', CLASSES_OFFICIAL),
+        ('train', 'images_detectron2/train', 'annotations_detectron2/train', CLASSES),
+        # ('val_official', 'images_detectron2/val', 'annotations_detectron2/val', CLASSES_OFFICIAL),
     ]:
         image_dir = os.path.join(root, image_dirname)
         gt_dir = os.path.join(root, sem_seg_dirname)

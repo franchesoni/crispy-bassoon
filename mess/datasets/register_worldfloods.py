@@ -24,7 +24,8 @@ def register_dataset(root):
 
     for split, image_dirname, sem_seg_dirname, class_names in [
         ('test_irrg', 'images_detectron2/test/irrg', 'annotations_detectron2/test', CLASSES),
-        ('test_rgb', 'images_detectron2/test/rgb', 'annotations_detectron2/test', CLASSES),
+        ('train_irrg', 'images_detectron2/train/irrg', 'annotations_detectron2/train', CLASSES),
+        # ('test_rgb', 'images_detectron2/test/rgb', 'annotations_detectron2/test', CLASSES),
     ]:
         image_dir = os.path.join(root, image_dirname)
         gt_dir = os.path.join(root, sem_seg_dirname)

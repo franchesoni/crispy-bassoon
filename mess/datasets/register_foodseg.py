@@ -23,10 +23,11 @@ CLASSES = [
 
 def register_dataset(root):
     ds_name = 'foodseg103'
-    root = os.path.join(root, 'FoodSeg103')
+    root = os.path.join(root, 'FoodSeg103', 'FoodSeg103')
 
     for split, image_dirname, sem_seg_dirname, class_names in [
         ('test', 'Images/img_dir/test', 'Images/ann_dir/test', CLASSES),
+        ('train', 'Images/img_dir/train', 'Images/ann_dir/train', CLASSES),
     ]:
         image_dir = os.path.join(root, image_dirname)
         gt_dir = os.path.join(root, sem_seg_dirname)

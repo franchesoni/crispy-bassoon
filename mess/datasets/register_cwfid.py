@@ -20,7 +20,8 @@ def register_dataset(root):
 
     for split, image_dirname, sem_seg_dirname, class_names in [
         ('test', 'images', 'annotations_detectron2/test', CLASSES),
-        ('test_official', 'images', 'annotations_detectron2/test', CLASSES_OFFICIAL),
+        ('train', 'images', 'annotations_detectron2/train', CLASSES),
+        # ('test_official', 'images', 'annotations_detectron2/test', CLASSES_OFFICIAL),
     ]:
         image_dir = os.path.join(root, image_dirname)
         gt_dir = os.path.join(root, sem_seg_dirname)
