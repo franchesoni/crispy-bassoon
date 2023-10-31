@@ -5,6 +5,7 @@ import gdown
 
 """This script downloads all the datasets that have a direct public download link and have training data. Train and test splits are preferred, if one is missing, val is used instead, if the two are missing, then we have no split and the dataset should be discarded. For chase, the train/test split is built at preparation. 
 - CryoNuSeg doesn't have a split, therefore it's discarded.
+- DRAM doesn't have annotations for training data, therefore it's discarded.
 - BDD100k doesn't have a public download link, therefore it's discarded.
 - floodnet doesn't have a public download link, therefore it's discarded.
 - postdam doesn't have a public download link, therefore it's discarded.
@@ -39,7 +40,7 @@ def download_chase(dataset_dir):
     ######################################
     ######################################
 def download_corrosion(dataset_dir):
-    ds_path = dataset_dir / 'Corrosion Condition State Classification'
+    ds_path = dataset_dir / 'CorrosionConditionStateClassification'
     if ds_path.exists():
         print('Dataset already downloaded')
         return
@@ -119,26 +120,6 @@ def download_deepcrack(dataset_dir):
     os.system('git clone https://github.com/yhlleo/DeepCrack.git DeepCrackGit')
     os.system('unzip DeepCrackGit/dataset/DeepCrack.zip -d ' + str(ds_path))
     os.system('rm -Rf DeepCrackGit')
-
-    ######################################
-    ######################################
-def download_dram(dataset_dir):
-    unrarpath = None
-    unrarpath = "/gpfsscratch/rech/chl/uyz17rc/cvpr/rar/unrar"
-    if unrarpath is None:
-        raise ValueError("you should set unrar path")
-    ds_path = dataset_dir / 'DRAM_processed'
-    if ds_path.exists():
-        print('Dataset already downloaded')
-        return
-    # Dataset page: https://faculty.runi.ac.il/arik/site/artseg/Dram-Dataset.html
-    print('Downloading dataset...')
-    # Downloading zip
-    os.system('wget https://faculty.runi.ac.il/arik/site/artseg/DRAM_processed.zip')
-    os.system('unzip DRAM_processed.zip -d ' + str(ds_path))
-    os.system(f'cd {ds_path} && {unrarpath} x DRAM_processed.rar')
-    os.system('rm DRAM_processed.zip')
-    os.system('rm ' + str(ds_path / 'DRAM_processed.rar'))
 
     ######################################
     ######################################
@@ -320,7 +301,6 @@ def download_everything(detectron2_datasets_path):
     download_kvasir(dataset_dir)
     download_isaid(dataset_dir)
     download_foodseg(dataset_dir)
-    download_dram(dataset_dir)
     download_deepcrack(dataset_dir)
     download_darkzurich(dataset_dir)
     download_cwfid(dataset_dir)

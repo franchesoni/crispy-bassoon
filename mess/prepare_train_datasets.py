@@ -45,7 +45,7 @@ def prepare_atlantis(dataset_dir):
 
 def prepare_chase(dataset_dir):
     print('preparing chase dataset...')
-    ds_path = dataset_dir / 'CHASE_DB1'
+    ds_path = dataset_dir / 'CHASEDB1'
     assert ds_path.exists(), f'Dataset not found in {ds_path}'
     if (ds_path / 'was_prepared').exists():
         print('chase dataset already prepared!')
@@ -79,11 +79,12 @@ def prepare_chase(dataset_dir):
 
         print(f'Saved {split} images and masks of {ds_path.name} dataset')
 
+    os.system(f"touch {ds_path / 'was_prepared'}")
 
 
 def prepare_corrosion(dataset_dir):
     print('preparing corrosion dataset...')
-    ds_path = dataset_dir / 'Corrosion Condition State Classification'
+    ds_path = dataset_dir / 'CorrosionConditionStateClassification'
     assert ds_path.exists(), f'Dataset not found in {ds_path}'
     if (ds_path / 'was_prepared').exists():
         print('corrosion dataset already prepared!')
@@ -124,12 +125,12 @@ def prepare_cub200(dataset_dir):
         os.makedirs(anno_dir, exist_ok=True)
 
         if split == 'test':
-            img_files = np.array(img_files)[test_images]
+            img_files_iter = np.array(img_files)[test_images]
         else:
-            img_files = np.array(img_files)[~np.array(test_images)]
+            img_files_iter = np.array(img_files)[~np.array(test_images)]
 
         # iterate over all image files
-        for img_file in tqdm.tqdm(img_files):
+        for img_file in tqdm.tqdm(img_files_iter):
             img_name = img_file.split('/')[-1]
             # Copy image
             img = Image.open(ds_path / 'images' / img_file)
@@ -225,7 +226,7 @@ def prepare_darkzurich(dataset_dir):
     os.system(f"touch {ds_path / 'was_prepared'}")
 
 def prepare_deepcrack(dataset_dir):
-    print('preparing dram dataset...')
+    print('preparing deepcrack dataset...')
     ds_path = dataset_dir / 'DeepCrack'
     assert ds_path.exists(), f'Dataset not found in {ds_path}'
     if (ds_path / 'was_prepared').exists():
@@ -248,64 +249,6 @@ def prepare_deepcrack(dataset_dir):
 
         print(f'Saved {split} images and masks of {ds_path.name} dataset')
     os.system(f"touch {ds_path / 'was_prepared'}")
-
-
-def prepare_dram(dataset_dir):
-    print('preparing dram dataset...')
-    ds_path = dataset_dir / 'DRAM_processed' / 'DRAM_processed'
-    assert ds_path.exists(), f'Dataset not found in {ds_path}'
-    if (ds_path / 'was_prepared').exists():
-        print('dataset already prepared!')
-        return
-
-    vocId_to_classId = {
-        0: 11,  # background
-        1: 11,  # aeroplane
-        2: 11,  # bicycle
-        3: 0,  # bird
-        4: 1,  # boat
-        5: 2,  # bottle
-        6: 11,  # bus
-        7: 11,  # car
-        8: 3,  # cat
-        9: 4,  # chair
-        10: 5,  # cow
-        11: 11,  # diningtable
-        12: 6,  # dog
-        13: 7,  # horse
-        14: 11,  # motorbike
-        15: 8,  # person
-        16: 9,  # pottedplant
-        17: 10,  # sheep
-        18: 11,  # sofa
-        19: 11,  # train
-        20: 11,  # tvmonitor
-        255: 255,  # ignore value
-    }
-
-    for split in ['train', 'test']:
-        # create directories
-        img_dir = ds_path / 'images_detectron2' / split
-        anno_dir = ds_path / 'annotations_detectron2' / split
-        img_dir.mkdir(parents=True, exist_ok=True)
-        anno_dir.mkdir(parents=True, exist_ok=True)
-
-        for img_path in tqdm.tqdm(sorted((ds_path / split ).glob('**/*.jpg'))):
-            img = Image.open(img_path)
-            img = img.convert('RGB')
-            # Add artist name to handle avoid duplicate file names
-            img.save(img_dir / (img_path.parent.name + '_' + img_path.name))
-
-            mask = Image.open(str(img_path).replace(split, 'labels').replace('.jpg', '.png'))
-            # Convert to detectron2 format
-            mask = np.vectorize(vocId_to_classId.get)(np.array(mask)).astype(np.uint8)
-            Image.fromarray(mask).save(anno_dir / (img_path.parent.name + '_' + img_path.name.replace('.jpg', '.png')))
-
-        print(f'Saved {split} images and masks of {ds_path.name} dataset')
-    os.system(f"touch {ds_path / 'was_prepared'}")
-
-
-
 
 
 
@@ -390,6 +333,8 @@ def prepare_isaid(dataset_dir):
         for mask_path in tqdm.tqdm(sorted((ds_path / f"{split}_masks" / "images").glob("*.png"))):
             file = mask_path.name
             id = file.split('_')[0]
+            if len(list(anno_dir.glob(f'{id}_*.png'))):
+                continue
             # Open image
             img = Image.open(ds_path / f'{split}_images' / "images" / f'{id}.png')
             # Open mask
@@ -719,17 +664,16 @@ def prepare_everything(detectron2_datasets_path):
     prepare_pst(dataset_dir)
     prepare_paxray(dataset_dir)
     prepare_mhp(dataset_dir)
-    # prepare_kvasir(dataset_dir)
-    # prepare_isaid(dataset_dir)
-    # prepare_foodseg(dataset_dir)
-    # prepare_dram(dataset_dir)
-    # prepare_deepcrack(dataset_dir)
-    # prepare_darkzurich(dataset_dir)
-    # prepare_cwfid(dataset_dir)
-    # prepare_cub200(dataset_dir)
-    # prepare_corrosion(dataset_dir)
-    # prepare_chase(dataset_dir)
-    # prepare_atlantis(dataset_dir)
+    prepare_kvasir(dataset_dir)
+    prepare_isaid(dataset_dir)
+    prepare_foodseg(dataset_dir)
+    prepare_deepcrack(dataset_dir)
+    prepare_darkzurich(dataset_dir)
+    prepare_cwfid(dataset_dir)
+    prepare_cub200(dataset_dir)
+    prepare_corrosion(dataset_dir)
+    prepare_chase(dataset_dir)
+    prepare_atlantis(dataset_dir)
 
 if __name__ == '__main__':
     from fire import Fire
