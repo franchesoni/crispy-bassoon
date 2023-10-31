@@ -167,7 +167,7 @@ def prepare_cwfid(dataset_dir):
 
     train_ids = [2, 5, 6, 7, 8, 11, 12, 14, 16, 17, 18, 19, 20, 23, 24, 25, 27, 28, 31, 33, 34, 36, 37, 38, 40, 41, 42, 43,
                 45, 46, 49, 50, 51, 52, 53, 55, 56, 57, 58, 59]
-    test_ids = [1, 3, 4, 9, 10, 13, 15, 21, 22, 26, 28, 29, 30, 32, 35, 39, 44, 47, 48, 54, 60]
+    test_ids = [1, 3, 4, 9, 10, 13, 15, 21, 22, 26, 29, 30, 32, 35, 39, 44, 47, 48, 54, 60]
     for split in ['train', 'test']:
         img_dir = ds_path / 'images_detectron2' / split
         anno_dir = ds_path / 'annotations_detectron2' / split
