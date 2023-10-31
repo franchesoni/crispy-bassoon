@@ -198,37 +198,6 @@ def prepare_cwfid(dataset_dir):
 
 
 
-def prepare_darkzurich(dataset_dir):
-    print('preparing darkzurich dataset...')
-    ds_path = dataset_dir / 'Dark_Zurich'
-    assert ds_path.exists(), f'Dataset not found in {ds_path}'
-    if (ds_path / 'was_prepared').exists():
-        print('dataset already prepared!')
-        return
-    
-    DARK_ZURICH_LABELS = (0, 7, 8, 11, 12, 13, 17, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 31, 32, 33)
-    labels_to_id = {label: i for i, label in enumerate(DARK_ZURICH_LABELS)}
-    labels_to_id[255] = 255
-
-    for split in ['train', 'val']:
-        mask_dir = Path(ds_path) / f'gt/{split}/night/GOPR0356'
-        anno_dir = Path(ds_path) / 'annotations_detectron2' / split
-        anno_dir.mkdir(parents=True, exist_ok=True)
-
-        # convert the masks to detectron2 format
-        for mask_path in tqdm.tqdm(list(mask_dir.glob('*labelIds.png'))):
-            mask = np.array(Image.open(mask_path))
-            # invalid pixels are marked with 255
-            invalid_mask = np.array(Image.open(str(mask_path).replace('labelIds', 'invGray')))
-            mask[invalid_mask == 255] = 255
-            # convert to ids
-            mask = np.vectorize(labels_to_id.get)(mask)
-            # save the mask
-            Image.fromarray(mask.astype(np.uint8)).save(anno_dir / mask_path.name)
-
-        print(f'Saved {split} images and masks of {ds_path.name} dataset')
-    os.system(f"touch {ds_path / 'was_prepared'}")
-
 def prepare_deepcrack(dataset_dir):
     print('preparing deepcrack dataset...')
     ds_path = dataset_dir / 'DeepCrack'
@@ -670,7 +639,6 @@ def prepare_everything(detectron2_datasets_path):
     prepare_isaid(dataset_dir)
     prepare_foodseg(dataset_dir)
     prepare_deepcrack(dataset_dir)
-    prepare_darkzurich(dataset_dir)
     prepare_cwfid(dataset_dir)
     prepare_cub200(dataset_dir)
     prepare_corrosion(dataset_dir)

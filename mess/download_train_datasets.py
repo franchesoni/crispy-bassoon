@@ -7,6 +7,7 @@ import gdown
 - CryoNuSeg doesn't have a split, therefore it's discarded.
 - DRAM doesn't have annotations for training data, therefore it's discarded.
 - BDD100k doesn't have a public download link, therefore it's discarded.
+- Dark Zurich train images don't have labels, therefore it's discarded.
 - floodnet doesn't have a public download link, therefore it's discarded.
 - postdam doesn't have a public download link, therefore it's discarded.
 - uavid doesn't have a public download link, therefore it's discarded.
@@ -87,26 +88,6 @@ def download_cwfid(dataset_dir):
     os.system('git clone https://github.com/cwfid/dataset.git')
     os.system('mv dataset ' + str(ds_path))
 
-    ######################################
-    ######################################
-def download_darkzurich(dataset_dir):
-    ds_path = dataset_dir / 'Dark_Zurich'
-    if ds_path.exists():
-        print('Dataset already downloaded')
-        return
-    ds_path.mkdir(parents=True, exist_ok=True)
-    # Dataset page: https://www.trace.ethz.ch/publications/2019/GCMA_UIoU/
-    print('Downloading dataset...')
-    # Downloading zip
-    os.system('wget https://data.vision.ee.ethz.ch/csakarid/shared/GCMA_UIoU/Dark_Zurich_val_anon.zip')
-    os.system('unzip Dark_Zurich_val_anon.zip -d ' + str(ds_path / 'val'))
-    os.system('rm Dark_Zurich_val_anon.zip')
-
-    os.system('wget https://data.vision.ee.ethz.ch/csakarid/shared/GCMA_UIoU/Dark_Zurich_train_anon.zip')
-    os.system('unzip Dark_Zurich_train_anon.zip -d ' + str(ds_path / 'train'))
-    os.system('rm Dark_Zurich_train_anon.zip')
-
- 
 
     ######################################
     ######################################
@@ -302,7 +283,6 @@ def download_everything(detectron2_datasets_path):
     download_isaid(dataset_dir)
     download_foodseg(dataset_dir)
     download_deepcrack(dataset_dir)
-    download_darkzurich(dataset_dir)
     download_cwfid(dataset_dir)
     download_cub(dataset_dir)
     download_corrosion(dataset_dir)
