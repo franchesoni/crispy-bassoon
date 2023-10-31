@@ -169,11 +169,15 @@ def prepare_cwfid(dataset_dir):
                 45, 46, 49, 50, 51, 52, 53, 55, 56, 57, 58, 59]
     test_ids = [1, 3, 4, 9, 10, 13, 15, 21, 22, 26, 28, 29, 30, 32, 35, 39, 44, 47, 48, 54, 60]
     for split in ['train', 'test']:
+        img_dir = ds_path / 'images_detectron2' / split
         anno_dir = ds_path / 'annotations_detectron2' / split
         os.makedirs(anno_dir, exist_ok=True)
+        os.makedirs(img_dir, exist_ok=True)
 
         ids = test_ids if split == 'test' else train_ids
         for id in tqdm.tqdm(ids):
+            img_path = ds_path / 'images' / f'{id:03}_image.png'
+            img = Image.open(img_path).save(img_dir / img_path.name)
             # get mask path
             mask_path = ds_path / 'annotations' / f'{id:03}_annotation.png'
             # Open mask
@@ -642,9 +646,7 @@ def prepare_zerowaste(dataset_dir):
     if (ds_path / 'was_prepared').exists():
         print('dataset already prepared!')
         return
-    
-    os.system(f"mv {ds_path / 'splits_final_deblurred'}/* {ds_path}/")
-    os.system(f"rm -r {ds_path / 'splits_final_deblurred'}")
+
     os.system(f"touch {ds_path / 'was_prepared'}")
 
 
