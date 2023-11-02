@@ -16,7 +16,7 @@ def download_dataset(dataset_dir):
     """
     print('Downloading dataset...')
     filesdir = dataset_dir / 'files'
-    filesdir.mkdir()
+    filesdir.mkdir(parents=True)
     # Download from Google Drive
     gdown.download(f"https://drive.google.com/uc?export=download&confirm=pbef&id=1hTS8QJBuGdcppFAr_bvW2tsD9hW_ptr5", str(filesdir / 'LV-MHP-v1.zip'))
 
@@ -28,13 +28,13 @@ def prepare_mhp(dataset_dir):
     print('preparing mhp dataset...')
     ds_path = dataset_dir / 'LV-MHP-v1'
     assert ds_path.exists(), f'Dataset not found in {ds_path}'
-    if (ds_path / 'was_prepared').exists():
+    if (dataset_dir / 'was_prepared').exists():
         print('dataset already prepared!')
         return
     for split in ['train', 'test']:
         # create directories
-        img_dir = ds_path / 'images_detectron2' / split
-        anno_dir = ds_path / 'annotations_detectron2' / split
+        img_dir = dataset_dir / 'images_detectron2' / split
+        anno_dir = dataset_dir / 'annotations_detectron2' / split
         img_dir.mkdir(parents=True, exist_ok=True)
         anno_dir.mkdir(parents=True, exist_ok=True)
 
@@ -66,12 +66,12 @@ def main():
     dataset_dir = Path(os.getenv('DETECTRON2_DATASETS', 'datasets'))
     ds_path = dataset_dir / 'LV-MHP-v1'
     if not ds_path.exists():
-        download_dataset(dataset_dir)
-        extract_dataset(dataset_dir)
+        download_dataset(ds_path)
+        extract_dataset(ds_path)
 
     assert ds_path.exists(), f'Dataset not found in {ds_path}'
 
-    prepare_mhp(dataset_dir)
+    prepare_mhp(ds_path)
     # # create directories
     # for split in ['train', 'test']:
     #     os.makedirs(ds_path / 'images_detectron2' / split, exist_ok=True)

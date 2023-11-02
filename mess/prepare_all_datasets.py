@@ -41,6 +41,8 @@ if __name__ == '__main__':
     dataset_dict = {
         'mhp_v1_sem_seg_test': prepare_mhp_v1,
         'foodseg103_sem_seg_test': prepare_foodseg,
+        'mhp_v1_sem_seg_train': prepare_mhp_v1,
+        'foodseg103_sem_seg_train': prepare_foodseg,
 
         # 'atlantis_sem_seg_test': prepare_atlantis,
         # 'isaid_sem_seg_val': prepare_isaid,

@@ -15,7 +15,7 @@ def download_dataset(ds_path):
     # Dataset page: https://github.com/LARC-CMU-SMU/FoodSeg103-Benchmark-v1
     print('Downloading dataset...')
     filesdir = ds_path / 'files'
-    filesdir.mkdir()
+    filesdir.mkdir(parents=True)
     # Downloading zip
     os.system('wget https://research.larc.smu.edu.sg/downloads/datarepo/FoodSeg103.zip -P ' + str(filesdir))
 
@@ -28,8 +28,8 @@ def main():
     dataset_dir = Path(os.getenv('DETECTRON2_DATASETS', 'datasets'))
     ds_path = dataset_dir / 'FoodSeg103'
     if not ds_path.exists():
-        download_dataset(dataset_dir)
-        extract_dataset(dataset_dir)
+        download_dataset(ds_path)
+        extract_dataset(ds_path)
 
     assert ds_path.exists(), f'Dataset not found in {ds_path}'
 
