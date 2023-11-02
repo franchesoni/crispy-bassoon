@@ -5,20 +5,12 @@ import os
 import argparse
 from detectron2.data import DatasetCatalog
 from prepare_datasets import (
-    prepare_bdd100k,
     prepare_mhp_v1,
     prepare_foodseg,
-    prepare_dark_zurich,
     prepare_atlantis,
-    prepare_dram,
     prepare_isaid,
-    prepare_isprs_potsdam,
     prepare_worldfloods,
-    prepare_floodnet,
-    prepare_uavid,
     prepare_kvasir_instrument,
-    prepare_chase_db1,
-    prepare_cryonuseg,
     prepare_paxray,
     prepare_pst900,
     prepare_corrosion_cs,
@@ -27,10 +19,10 @@ from prepare_datasets import (
     prepare_suim,
     prepare_cub_200,
     prepare_cwfid,
-    prepare_ndd20,
-    prepare_mypascalvoc,
-    prepare_mysbd,
-    prepare_mygrabcut,
+    # prepare_ndd20,
+    # prepare_mypascalvoc,
+    # prepare_mysbd,
+    # prepare_mygrabcut,
 )
 
 if __name__ == '__main__':
@@ -47,47 +39,31 @@ if __name__ == '__main__':
 
     # prepare datasets
     dataset_dict = {
-        'dark_zurich_sem_seg_val': prepare_dark_zurich,
         'mhp_v1_sem_seg_test': prepare_mhp_v1,
         'foodseg103_sem_seg_test': prepare_foodseg,
-        'atlantis_sem_seg_test': prepare_atlantis,
-        'dram_sem_seg_test': prepare_dram,
-        'isaid_sem_seg_val': prepare_isaid,
-        'worldfloods_sem_seg_test_irrg': prepare_worldfloods,
-        'kvasir_instrument_sem_seg_test': prepare_kvasir_instrument,
-        'chase_db1_sem_seg_test': prepare_chase_db1,
-        'cryonuseg_sem_seg_test': prepare_cryonuseg,
-        'paxray_sem_seg_test_lungs': prepare_paxray,
-        'pst900_sem_seg_test': prepare_pst900,
-        'corrosion_cs_sem_seg_test': prepare_corrosion_cs,
-        'deepcrack_sem_seg_test': prepare_deepcrack,
-        'zerowaste_sem_seg_test': prepare_zerowaste,
-        'suim_sem_seg_test': prepare_suim,
-        'cub_200_sem_seg_test': prepare_cub_200,
-        'cwfid_sem_seg_test': prepare_cwfid,
-        'ndd20_sem_seg_test': prepare_ndd20,
-        'mypascalvoc_sem_seg_test': prepare_mypascalvoc,
-        'mysbd_sem_seg_test': prepare_mysbd,
-        'mygrabcut_sem_seg_test': prepare_mygrabcut,
 
-        ### Manual preparation ###
-        # Place the manually downloaded zip files in the dataset directory or the root of the project.
+        # 'atlantis_sem_seg_test': prepare_atlantis,
+        # 'isaid_sem_seg_val': prepare_isaid,
+        # 'worldfloods_sem_seg_test_irrg': prepare_worldfloods,
+        # 'kvasir_instrument_sem_seg_test': prepare_kvasir_instrument,
+        # 'paxray_sem_seg_test_lungs': prepare_paxray,
+        # 'pst900_sem_seg_test': prepare_pst900,
+        # 'corrosion_cs_sem_seg_test': prepare_corrosion_cs,
+        # 'deepcrack_sem_seg_test': prepare_deepcrack,
+        # 'zerowaste_sem_seg_test': prepare_zerowaste,
+        # 'suim_sem_seg_test': prepare_suim,
+        # 'cub_200_sem_seg_test': prepare_cub_200,
+        # 'cwfid_sem_seg_test': prepare_cwfid,
 
-        # Download 10k images and segmentation labels from https://bdd-data.berkeley.edu/ and place zip in datasets
-        'bdd100k_sem_seg_val': prepare_bdd100k,
-        # Download zip from https://www.isprs.org/education/benchmarks/UrbanSemLab/default.aspx and place it in datasets
-        'isprs_potsdam_sem_seg_test_irrg': prepare_isprs_potsdam,
-        # Download folder from https://drive.google.com/drive/folders/1leN9eWVQcvWDVYwNb2GCo5ML_wBEycWD to datasets
-        'floodnet_sem_seg_test': prepare_floodnet,
-        # Download zip from https://uavid.nl and place it in project root
-        'uavid_sem_seg_val': prepare_uavid,
+        # 'ndd20_sem_seg_test': prepare_ndd20,
+        # 'mypascalvoc_sem_seg_test': prepare_mypascalvoc,
+        # 'mysbd_sem_seg_test': prepare_mysbd,
+        # 'mygrabcut_sem_seg_test': prepare_mygrabcut,
     }
 
     # print status of datasets
     print('Dataset: Status')
     for dataset_name in dataset_dict.keys():
-        # if dataset_name.startswith('mypascalvoc'):
-        #     breakpoint()
         try:
             status = f'{len(DatasetCatalog.get(dataset_name))} images'
         except FileNotFoundError:

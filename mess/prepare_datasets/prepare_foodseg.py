@@ -14,10 +14,14 @@ def download_dataset(ds_path):
     """
     # Dataset page: https://github.com/LARC-CMU-SMU/FoodSeg103-Benchmark-v1
     print('Downloading dataset...')
+    filesdir = ds_path / 'files'
+    filesdir.mkdir()
     # Downloading zip
-    os.system('wget https://research.larc.smu.edu.sg/downloads/datarepo/FoodSeg103.zip')
-    os.system('unzip -P LARCdataset9947 FoodSeg103.zip -d ' + str(ds_path))
-    os.system('rm FoodSeg103.zip')
+    os.system('wget https://research.larc.smu.edu.sg/downloads/datarepo/FoodSeg103.zip -P ' + str(filesdir))
+
+def extract_dataset(ds_path):
+    filesdir = ds_path / 'files'
+    os.system(f'unzip -P LARCdataset9947 {filesdir / "FoodSeg103.zip"} -d ' + str(ds_path))
 
 
 def main():
@@ -25,6 +29,7 @@ def main():
     ds_path = dataset_dir / 'FoodSeg103'
     if not ds_path.exists():
         download_dataset(dataset_dir)
+        extract_dataset(dataset_dir)
 
     assert ds_path.exists(), f'Dataset not found in {ds_path}'
 
