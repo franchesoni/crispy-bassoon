@@ -1,6 +1,7 @@
 from pathlib import Path
 import os
-os.environ['DETECTRON2_DATASETS'] = "/gpfsscratch/rech/chl/uyz17rc/cvpr/data"
+from config import datasets_path
+os.environ['DETECTRON2_DATASETS'] = str(datasets_path)
 import tqdm
 import shutil
 import cProfile
@@ -11,7 +12,6 @@ from PIL import Image
 from IISS.extract_masks import extract_masks_single, get_embedding_sam
 from IISS.compute_features import compute_features_list
 from mess.datasets.TorchvisionDataset import TorchvisionDataset, get_detectron2_datasets
-from config import datasets_path
 
 
 def precompute_for_dataset(torchvision_dataset, dstdir, reset=False, dev=False, dino=False, sam=False, sam_embeddings=False, overwrite=False, return_if_dir_exists=True):
