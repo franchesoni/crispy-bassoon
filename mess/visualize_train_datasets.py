@@ -24,17 +24,23 @@ def save_visualization(dstdir):
         try:
             ds = TorchvisionDataset(ds_name, lambda x: x)
             (dstdir / ds_name).mkdir(parents=True, exist_ok=True)
+            print('class names:', ds.class_names)
             print(ds_name, 'len:', len(ds))
             sample = ds[0]
             print('first sample', len(sample), sample[0].size, sample[1].shape)
             sample = ds[len(ds)-1]
             print('last sample', len(sample), sample[0].size, sample[1].shape)
             for ind, sample in enumerate(ds):
-                if ind < 10:
+                if ind == 10:
+                    break
+                if not (dstdir / ds_name / f'{ind}_mask.png').exists():
                     img, mask_tensor = sample
                     mask = Image.fromarray(normto255(np.array(mask_tensor[0])))
                     img.save(dstdir / ds_name / f'{ind}_img.png')
                     mask.save(dstdir / ds_name / f'{ind}_mask.png')
+                    print(f'saved image {ind}', end='\r')
+                else:
+                    print(f'skipping img {ind}', end='\r')
 
             print(ds_name, 'is ok')
             count += 1
