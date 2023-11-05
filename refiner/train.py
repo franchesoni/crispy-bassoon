@@ -140,18 +140,18 @@ def validate(model, val_loader, criterion, device):
             val_loss += loss.item()
     return val_loss / len(val_loader)
 
-def train():
-    seed_everything(0)
+def train(samdata_dir, seed=0, batch_size=16):
+    seed_everything(seed)
     # Assuming 'Decoder' is your model and 'SamDataset' is your dataset
     # Define your dataset
-    samdata_dir = Path('/home/franchesoni/adisk/samdata')
+    samdata_dir = Path(samdata_dir)
     train_ds = SamDataset(samdata_dir, split='train')
     val_ds = SamDataset(samdata_dir, split='val')
 
 
     # Create a DataLoader
-    train_dl = DataLoader(train_ds, batch_size=4, shuffle=True, num_workers=2)
-    val_dl = DataLoader(val_ds, batch_size=4, shuffle=False, num_workers=2)
+    train_dl = DataLoader(train_ds, batch_size=batch_size, shuffle=True, num_workers=8)
+    val_dl = DataLoader(val_ds, batch_size=1, shuffle=False, num_workers=8)
 
     # Instantiate the model
     model = Decoder()
@@ -236,4 +236,5 @@ def train():
 
 
 if __name__ == '__main__':
-    train()
+    from fire import Fire
+    Fire(train)
