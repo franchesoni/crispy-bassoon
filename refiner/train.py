@@ -7,6 +7,7 @@ import json
 from PIL import Image
 from pycocotools import mask as mask_utils
 import numpy as np
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 from torchvision.transforms import v2 as transforms
 import torch
@@ -17,11 +18,11 @@ from torch.optim.lr_scheduler import ReduceLROnPlateau
 
 
 
-
 class SamDataset(torch.utils.data.Dataset):
     def __init__(self, samdata_dir, out_size=(256,256), split='train'):
+        samdata_dir = Path(samdata_dir)
         self.split = split
-        assert self.split in ['train', 'val', 'test']
+        assert self.split in ['train', 'val', 'trainval']
         self.samdata_dir = samdata_dir
         print('split:', self.split, 'out_size:', out_size)
         self.out_size = out_size if self.split == 'train' else (644, 644)
@@ -33,6 +34,8 @@ class SamDataset(torch.utils.data.Dataset):
         elif self.split == 'val':
             self.image_names = self.image_names[-min(len(self.image_names)//10, 1000):]
             self.label_names = self.label_names[-min(len(self.label_names)//10, 1000):]
+        elif self.split == 'trainval':
+            pass  # use all
         assert all([img.stem == label.stem for img, label in zip(self.image_names, self.label_names)])
         self.num_samples = len(self.image_names)
         self.transform = transforms.Compose([
@@ -73,7 +76,7 @@ class SamDataset(torch.utils.data.Dataset):
         # resize everythign to the output size
         imgmask = torch.nn.functional.interpolate(torch.cat((img, mask[None]), axis=0)[None], size=self.out_size, mode='bilinear').squeeze()
         img, mask = imgmask[:-1], imgmask[-1]
-        return img, patches, mask
+        return self.image_names[idx], img, patches, mask
 
 def minmaxnorm(x):
     return (x - x.min()) / (x.max() - x.min())
@@ -150,8 +153,8 @@ def train(samdata_dir, seed=0, batch_size=16):
 
 
     # Create a DataLoader
-    train_dl = DataLoader(train_ds, batch_size=batch_size, shuffle=True, num_workers=8)
-    val_dl = DataLoader(val_ds, batch_size=1, shuffle=False, num_workers=8)
+    train_dl = DataLoader(train_ds, batch_size=batch_size, shuffle=True, num_workers=0, pin_memory=True)
+    val_dl = DataLoader(val_ds, batch_size=1, shuffle=False, num_workers=0)
 
     # Instantiate the model
     model = Decoder()
@@ -236,5 +239,28 @@ def train(samdata_dir, seed=0, batch_size=16):
 
 
 if __name__ == '__main__':
-    from fire import Fire
-    Fire(train)
+    # get dataset dir from args
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--datadir', type=str, required=True)
+    args = parser.parse_args()
+    sam_dataset_dir = Path(args.datadir)
+
+    # Define the function to process each sample
+    def process_and_save(sample, sam_dataset_dir):
+        imgname, img, patches, mask = sample
+        Image.fromarray(255 * patches[0].numpy()).convert('L').save(sam_dataset_dir / (imgname.stem + '_coarse.png'))
+        Image.fromarray(255 * mask.numpy()).convert('L').save(sam_dataset_dir / (imgname.stem + 'gt.png'))
+
+    # Directory and dataset setup
+    ds = SamDataset(sam_dataset_dir, split='trainval')
+
+    # Set up the ThreadPoolExecutor
+    num_workers = 10  # Or however many threads you want to use; often set to the number of cores
+    with ThreadPoolExecutor(max_workers=num_workers) as executor:
+        # Create a future to process each sample in the dataset
+        futures = [executor.submit(process_and_save, sample, sam_dataset_dir) for sample in ds]
+
+        # Use tqdm to create a progress bar for the futures as they complete
+        for future in tqdm.tqdm(as_completed(futures), total=len(ds)):
+            future.result()  # This will raise any exceptions that occurred during execution
