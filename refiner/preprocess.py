@@ -73,7 +73,7 @@ def preprocess(sam_dataset_dir):
     def process_and_save(sample, sam_dataset_dir):
         imgname, img, patches, mask = sample
         Image.fromarray(255 * patches[0].numpy()).convert('L').save(sam_dataset_dir / (imgname.stem + '_coarse.png'))
-        Image.fromarray(255 * mask.numpy()).convert('L').save(sam_dataset_dir / (imgname.stem + 'gt.png'))
+        Image.fromarray(255 * mask.numpy()).convert('L').save(sam_dataset_dir / (imgname.stem + '_gt.png'))
 
     # Directory and dataset setup
     ds = SamDatasetOnline(sam_dataset_dir, split='trainval')
@@ -81,8 +81,15 @@ def preprocess(sam_dataset_dir):
     # Set up the ThreadPoolExecutor
     num_workers = 10  # Or however many threads you want to use; often set to the number of cores
     with ThreadPoolExecutor(max_workers=num_workers) as executor:
+        missing_indices = []
+        for idx in range(len(ds)):
+            imgname = ds.image_names[idx]
+            dst_names = [sam_dataset_dir / (imgname.stem + '_gt.png'), sam_dataset_dir / (imgname.stem + '_coarse.png')]
+            if not all([dst_name.exists() for dst_name in dst_names]):
+                missing_indices.append(idx)
+
         # Create a future to process each sample in the dataset
-        futures = [executor.submit(process_and_save, sample, sam_dataset_dir) for sample in ds]
+        futures = [executor.submit(process_and_save, ds[idx], sam_dataset_dir) for idx in missing_indices]
 
         # Use tqdm to create a progress bar for the futures as they complete
         for future in tqdm.tqdm(as_completed(futures), total=len(ds)):
