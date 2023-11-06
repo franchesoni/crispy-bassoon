@@ -1,4 +1,5 @@
 import json
+import random
 from pathlib import Path
 import tqdm
 from pycocotools import mask as mask_utils
@@ -28,10 +29,11 @@ class SamDatasetOnline(torch.utils.data.Dataset):
             pass  # use all
         assert all([img.stem == label.stem for img, label in zip(self.image_names, self.label_names)])
         self.num_samples = len(self.image_names)
+        self.totensor = transforms.ToTensor()
         self.transform = transforms.Compose([
             transforms.ToTensor(),
-            transforms.Normalize(mean=[0.485, 0.456, 0.406], 
-                                std=[0.229, 0.224, 0.225])
+            # transforms.Normalize(mean=[0.485, 0.456, 0.406], 
+             #                   std=[0.229, 0.224, 0.225])
         ])
     
     def __len__(self):
@@ -45,12 +47,13 @@ class SamDatasetOnline(torch.utils.data.Dataset):
         # randomly choose only 10% of the masks
         n_masks = max(len(anns) // 10, min(5, len(anns)))
         assert n_masks > 0
-        np.random.seed(idx)
+        seed_everything(idx)
         anns = np.random.choice(anns, n_masks)
         masks = [mask_utils.decode(ann['segmentation']) for ann in anns]
         mask = np.sum(masks, axis=0) > 0
         mask = torch.from_numpy(mask)  # bool
 
+        seed_everything(idx)
         if self.split == 'train':
             # random crop
             i, j, h, w = transforms.RandomResizedCrop.get_params(img, scale=(0.1, 1.0), ratio=(0.7, 1.3))
@@ -68,30 +71,61 @@ class SamDatasetOnline(torch.utils.data.Dataset):
         img, mask = imgmask[:-1], imgmask[-1]
         return self.image_names[idx], img, patches, mask
 
+    def get_img(self, idx):
+        img = Image.open(self.image_names[idx])
+        img = self.transform(img)
+
+
+def seed_everything(seed):
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed(seed)
+    np.random.seed(seed)
+    random.seed(seed)
+
+def minmaxnorm(x):
+    return (x - x.min()) / (x.max() - x.min())
+
+
+
 def preprocess(sam_dataset_dir):
     # Define the function to process each sample
-    def process_and_save(sample, sam_dataset_dir):
+    def process_and_save(sample, dstdir):
         imgname, img, patches, mask = sample
-        Image.fromarray(255 * patches[0].numpy()).convert('L').save(sam_dataset_dir / (imgname.stem + '_coarse.png'))
-        Image.fromarray(255 * mask.numpy()).convert('L').save(sam_dataset_dir / (imgname.stem + '_gt.png'))
+        Image.fromarray(255*minmaxnorm(img.permute(1,2,0)).numpy().astype(np.uint8)).convert('RGB').save(dstdir / (imgname.stem + '_img.png'))
+        Image.fromarray(255 * patches[0].numpy()).convert('L').save(dstdir / (imgname.stem + '_coarse.png'))
+        Image.fromarray(255 * mask.numpy()).convert('L').save(dstdir / (imgname.stem + '_gt.png'))
 
     # Directory and dataset setup
     ds = SamDatasetOnline(sam_dataset_dir, split='trainval')
+    dstdir = sam_dataset_dir / 'processed'
+    dstdir.mkdir(exist_ok=True)
 
     # Set up the ThreadPoolExecutor
     num_workers = 10  # Or however many threads you want to use; often set to the number of cores
     with ThreadPoolExecutor(max_workers=num_workers) as executor:
+        print('finding missing...')
         missing_indices = []
-        for idx in range(len(ds)):
+        for idx in tqdm.tqdm(range(len(ds))):
             imgname = ds.image_names[idx]
-            dst_names = [sam_dataset_dir / (imgname.stem + '_gt.png'), sam_dataset_dir / (imgname.stem + '_coarse.png')]
+            dst_names = [dstdir / (imgname.stem + '_gt.png'), dstdir / (imgname.stem + '_coarse.png'), dstdir / (imgname.stem + '_img.jpg')]
             if not all([dst_name.exists() for dst_name in dst_names]):
                 missing_indices.append(idx)
 
+        print('n missing:', len(missing_indices))
         # Create a future to process each sample in the dataset
-        futures = [executor.submit(process_and_save, ds[idx], sam_dataset_dir) for idx in missing_indices]
+        futures = [executor.submit(process_and_save, ds[idx], dstdir) for idx in missing_indices]
 
         # Use tqdm to create a progress bar for the futures as they complete
         for future in tqdm.tqdm(as_completed(futures), total=len(ds)):
             future.result()  # This will raise any exceptions that occurred during execution
+
+if __name__ == '__main__':
+    # get dataset dir from args
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--datadir', type=str, required=True)
+    args = parser.parse_args()
+    sam_dataset_dir = Path(args.datadir)
+    preprocess(sam_dataset_dir)
+
 
