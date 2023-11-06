@@ -1,8 +1,8 @@
-# train refiner from predicted patches to ground truth masks
 import tqdm
 from pathlib import Path
 import random
 from PIL import Image
+import cProfile
 
 import numpy as np
 
@@ -20,37 +20,56 @@ class SamDataset(torch.utils.data.Dataset):
         self.split = split
         assert self.split in ['train', 'val', 'trainval']
         self.samdata_dir = samdata_dir
-        self.image_names = sorted([f for f in samdata_dir.glob('sa_*.jpg')])
-        self.gt_names = sorted([f for f in samdata_dir.glob('sa_*gt.png')])
-        self.patch_names = sorted([f for f in samdata_dir.glob('sa_*coarse.png')])
+
+
+
+        # Get all possible unique identifiers from the image names
+        unique_ids = sorted({p.stem.split('_img')[0] for p in samdata_dir.glob('sa_*_img.png')})
+
+        # Initialize empty lists for images, ground truths, and coarse images
+        matched_image_names = []
+        matched_gt_names = []
+        matched_coarse_names = []
+
+        # Check for corresponding files and populate the lists
+        for unique_id in unique_ids:
+            img_name = samdata_dir / f'{unique_id}_img.png'
+            gt_name = samdata_dir / f'{unique_id}_gt.png'
+            coarse_name = samdata_dir / f'{unique_id}_coarse.png'
+
+            if img_name.exists() and gt_name.exists() and coarse_name.exists():
+                matched_image_names.append(img_name)
+                matched_gt_names.append(gt_name)
+                matched_coarse_names.append(coarse_name)
+
+        self.image_names = sorted(matched_image_names)
+        self.gt_names = sorted(matched_gt_names)
+        self.coarse_names = sorted(matched_coarse_names)
+        
         if self.split == 'train':
             self.image_names = self.image_names[:-min(len(self.image_names)//10, 1000)]
             self.gt_names = self.gt_names[:-min(len(self.gt_names)//10, 1000)]
-            self.patch_names = self.patch_names[:-min(len(self.patch_names)//10, 1000)]
+            self.coarse_names = self.coarse_names[:-min(len(self.coarse_names)//10, 1000)]
         elif self.split == 'val':
             self.image_names = self.image_names[-min(len(self.image_names)//10, 1000):]
             self.gt_names = self.gt_names[-min(len(self.gt_names)//10, 1000):]
-            self.patch_names = self.patch_names[-min(len(self.patch_names)//10, 1000):]
+            self.coarse_names = self.coarse_names[-min(len(self.coarse_names)//10, 1000):]
         elif self.split == 'trainval':
             pass
 
-        assert all([img.stem.split('_')[:2] == gt.stem.split('_')[:2] == patch.stem.split('_')[:2] for img, gt, patch in zip(self.image_names, self.gt_names, self.patch_names)])
+        assert all([img.stem.split('_')[:2] == gt.stem.split('_')[:2] == coarse.stem.split('_')[:2] for img, gt, coarse in zip(self.image_names, self.gt_names, self.coarse_names)])
 
-        self.transform = transforms.Compose([
-            transforms.ToTensor(),
-            transforms.Normalize(mean=[0.485, 0.456, 0.406], 
-                                std=[0.229, 0.224, 0.225])
-        ])
+        self.totensor = transforms.ToTensor()
  
     def __len__(self):
         return len(self.image_names)
 
     def __getitem__(self, idx):
         img = Image.open(self.image_names[idx])
-        img = self.transform(img)
-        patches = Image.open(self.patch_names[idx])
-        mask = Image.open(self.gt_names[idx])
-        return img, patches, mask
+        img = self.totensor(img) / 128 - 0.5
+        coarse = self.totensor(Image.open(self.coarse_names[idx]))
+        mask = self.totensor(Image.open(self.gt_names[idx]))
+        return img, coarse, mask
 
 
  
@@ -60,15 +79,15 @@ def minmaxnorm(x):
 
 
 class Decoder(torch.nn.Module):
-    def __init__(self, n_layers=3):
+    def __init__(self, n_layers=3, hidden_size=64, in_channels=4):
         super().__init__()
         self.n_layers = n_layers
-        self.initial_conv = torch.nn.Conv2d(4, 64, kernel_size=3, padding=1)
-        self.conv = torch.nn.ModuleList([torch.nn.Conv2d(64, 64, kernel_size=3, padding=1) for _ in range(n_layers-1)])
+        self.initial_conv = torch.nn.Conv2d(in_channels, hidden_size, kernel_size=3, padding=1)
+        self.conv = torch.nn.ModuleList([torch.nn.Conv2d(hidden_size, hidden_size, kernel_size=3, padding=1) for _ in range(n_layers-1)])
         self.act = torch.nn.GELU()
         # LayerNorm should be properly defined for each conv layer or use another normalization
-        self.norms = torch.nn.ModuleList([torch.nn.BatchNorm2d(64) for _ in range(n_layers-1)])
-        self.final_conv = torch.nn.Conv2d(64, 1, kernel_size=1)
+        self.norms = torch.nn.ModuleList([torch.nn.BatchNorm2d(hidden_size) for _ in range(n_layers-1)])
+        self.final_conv = torch.nn.Conv2d(hidden_size, 1, kernel_size=1)
 
     def forward(self, x):
         x = self.act(self.initial_conv(x))
@@ -112,15 +131,15 @@ def validate(model, val_loader, criterion, device):
     model.eval()  # Set model to evaluation mode
     val_loss = 0.0
     with torch.no_grad():  # Turn off gradients for validation, saves memory and computations
-        for images, patches, gt_masks in val_loader:
-            images, patches, gt_masks = images.to(device), patches.to(device), gt_masks.to(device)
-            model_input = torch.cat((images, patches), dim=1)
+        for images, coarse, gt_masks in val_loader:
+            images, coarse, gt_masks = images.to(device), coarse.to(device), gt_masks.to(device)
+            model_input = torch.cat((images, coarse), dim=1)
             predictions = model(model_input)
-            loss = criterion(predictions, gt_masks.unsqueeze(1))
+            loss = criterion(predictions, gt_masks)
             val_loss += loss.item()
     return val_loss / len(val_loader)
 
-def train(samdata_dir, seed=0, batch_size=16):
+def train(samdata_dir, seed=0, batch_size=8):
     seed_everything(seed)
     # Assuming 'Decoder' is your model and 'SamDataset' is your dataset
     # Define your dataset
@@ -128,16 +147,18 @@ def train(samdata_dir, seed=0, batch_size=16):
     train_ds = SamDataset(samdata_dir, split='train')
     val_ds = SamDataset(samdata_dir, split='val')
 
-
     # Create a DataLoader
-    train_dl = DataLoader(train_ds, batch_size=batch_size, shuffle=True, num_workers=0, pin_memory=True)
-    val_dl = DataLoader(val_ds, batch_size=1, shuffle=False, num_workers=0)
+    train_dl = DataLoader(train_ds, batch_size=batch_size, shuffle=True, num_workers=10, pin_memory=True)
+    val_dl = DataLoader(val_ds, batch_size=1, shuffle=False, num_workers=10)
 
     # Instantiate the model
-    model = Decoder(n_layers=5)
+    model = Decoder(n_layers=5, hidden_size=64)
+
 
     # Send the model to GPU if available
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    if Path('best_model.pth').exists():
+        model.load_state_dict(torch.load('best_model.pth', map_location=device))
     model.to(device)
 
     # Define an optimizer
@@ -151,26 +172,30 @@ def train(samdata_dir, seed=0, batch_size=16):
 
     # Initialize EarlyStopping
     early_stopping = EarlyStopping(patience=2, min_delta=0.001)
+    best_val_loss = 1e9
     # Training loop
-    num_epochs = 10
+    num_epochs = 24
     for epoch in range(num_epochs):
         model.train()
         train_loss = 0
 
+        profiler = cProfile.Profile()
+        profiler.enable()
+
         train_dl_wrapped = tqdm.tqdm(train_dl, desc=f"Epoch {epoch+1}/{num_epochs}", unit="batch")
 
-        for batch_idx, (images, patches, gt_masks) in enumerate(train_dl_wrapped):
+        for batch_idx, (images, coarse, gt_masks) in enumerate(train_dl_wrapped):
             # Send data to device
-            images, patches, gt_masks = images.to(device), patches.to(device), gt_masks.to(device)
+            images, coarse, gt_masks = images.to(device), coarse.to(device), gt_masks.to(device)
 
-            # Concatenate images and patches to form input to the model
-            model_input = torch.cat((images, patches), dim=1)
+            # Concatenate images and coarse to form input to the model
+            model_input = torch.cat((images, coarse), dim=1)
 
             # Forward pass
             predictions = model(model_input)
 
             # Compute loss
-            loss = criterion(predictions, gt_masks.unsqueeze(1))
+            loss = criterion(predictions, gt_masks)
 
             # Backward pass
             optimizer.zero_grad()
@@ -183,6 +208,11 @@ def train(samdata_dir, seed=0, batch_size=16):
             train_loss += loss.item()
             train_dl_wrapped.set_postfix({'train_loss': train_loss/(batch_idx+1)}, refresh=True)
 
+            profiler.disable()
+            profiler.dump_stats(f'profile.stats')
+            profiler.enable()
+        profiler.disable()
+        profiler.dump_stats(f'profile.stats')
 
         val_loss = validate(model, val_dl, criterion, device)
 
@@ -200,6 +230,7 @@ def train(samdata_dir, seed=0, batch_size=16):
             best_val_loss = val_loss
             torch.save(model.state_dict(), 'best_model.pth')
 
+
         # Check the learning rate and break if it's below a certain threshold
         for param_group in optimizer.param_groups:
             if param_group['lr'] < 1e-7:
@@ -211,6 +242,7 @@ def train(samdata_dir, seed=0, batch_size=16):
 
     # After training, load the best model for inference or further training
     model.load_state_dict(torch.load('best_model.pth'))
+    return model
 
 
 
