@@ -91,7 +91,7 @@ def preprocess(sam_dataset_dir):
     # Define the function to process each sample
     def process_and_save(sample, dstdir):
         imgname, img, patches, mask = sample
-        Image.fromarray(255*minmaxnorm(img.permute(1,2,0)).numpy().astype(np.uint8)).convert('RGB').save(dstdir / (imgname.stem + '_img.png'))
+        Image.fromarray((255*minmaxnorm(img.permute(1,2,0)).numpy()).astype(np.uint8)).convert('RGB').save(dstdir / (imgname.stem + '_img.png'))
         Image.fromarray(255 * patches[0].numpy()).convert('L').save(dstdir / (imgname.stem + '_coarse.png'))
         Image.fromarray(255 * mask.numpy()).convert('L').save(dstdir / (imgname.stem + '_gt.png'))
 
