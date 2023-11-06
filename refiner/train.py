@@ -89,15 +89,15 @@ class Decoder(torch.nn.Module):
         self.norms = torch.nn.ModuleList([torch.nn.BatchNorm2d(hidden_size) for _ in range(n_layers-1)])
         self.final_conv = torch.nn.Conv2d(hidden_size, 1, kernel_size=1)
 
-    def forward(self, x):
-        x = self.act(self.initial_conv(x))
+    def forward(self, ox):
+        x = self.act(self.initial_conv(ox))
         for i in range(self.n_layers-1):
             residual = x
             x = self.conv[i](x)
             x = self.act(x)
             x = self.norms[i](x)
             x += residual
-        x = self.final_conv(x)
+        x = ox[:, -1:] + self.final_conv(x)  # sum initial mask
         return x
 
 def seed_everything(seed):
@@ -156,7 +156,7 @@ def train(samdata_dir, seed=0, batch_size=8):
 
 
     # Send the model to GPU if available
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    device = torch.device('cpu')#torch.device("cuda" if torch.cuda.is_available() else "cpu")
     if Path('best_model.pth').exists():
         model.load_state_dict(torch.load('best_model.pth', map_location=device))
     model.to(device)
