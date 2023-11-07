@@ -50,7 +50,7 @@ def save_visualization(dstdir):
             print('failed with exception', e)
             print('>'*30)
 
-    print('total datasets:', count, 'half is', count // 2)
+    print('our datasets:', len(our_datasets), 'total datasets:', count, 'half is', count // 2)
 
 if __name__ == '__main__':
     from fire import Fire
