@@ -24,6 +24,14 @@ class TorchvisionDataset(Dataset):
         input = self.dataset[item]
         image = Image.open(input['file_name']).convert('RGB')
         mask = Image.open(input['sem_seg_file_name'])
+        # if not the same size, crop the image and mask to the min of their sizes
+        if image.size != mask.size:
+            RuntimeWarning(f'Image and mask {input["file_name"]} have different sizes. Cropping to the min of their sizes.')
+            minw, minh = min(image.size[0], mask.size[0]), min(image.size[1], mask.size[1])
+            min_size = (minw, minh)
+            image = image.crop((0, 0, min_size[0], min_size[1]))
+            mask = mask.crop((0, 0, min_size[0], min_size[1]))
+    
 
         # resize image and mask if necessary while keeping aspect ratio
         if self.max_size is not None and max(image.size) > self.max_size:
