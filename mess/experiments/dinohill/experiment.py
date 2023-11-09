@@ -136,7 +136,7 @@ def get_metric(pred, ds_gt_mask):
 def main(precomputed_dir, dstdir, ds_name, seed):
     dev = False 
     plot = False
-    dstdir = Path(dstdir / ds_name)
+    dstdir = Path(dstdir) / ds_name
     dstdir.mkdir(exist_ok=True, parents=True)
     # prepare directories
     precomputed_dir = Path(precomputed_dir)
