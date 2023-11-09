@@ -186,7 +186,7 @@ def main(precomputed_dir, dstdir, ds_name, seed):
     for ind, sample in tqdm.tqdm(enumerate(ds), total=len(ds)):
         for class_ind in class_indices:
             if (sample[1]==class_ind).sum() == 0:
-                empty_mask_indices_per_class[class_indices].append(ind)
+                empty_mask_indices_per_class[class_ind].append(ind)
 
     for class_ind, class_name in zip(class_indices, class_names):
         if class_ind in values_to_ignore:
