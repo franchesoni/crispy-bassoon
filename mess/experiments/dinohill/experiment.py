@@ -175,7 +175,8 @@ def main(precomputed_dir, dstdir, ds_name, seed):
         resuming = False
     else:
         with open(dstdir / f'results_seed_{seed}.json', 'r') as f:
-            res = ast.literal_eval(f.read())
+            res = f.read()
+        res = ast.literal_eval(res.replace('tensor', ''))
         resuming = True
 
 
