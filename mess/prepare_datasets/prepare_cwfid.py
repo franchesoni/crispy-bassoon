@@ -25,7 +25,7 @@ def download_dataset(ds_path):
 
 def extract_dataset(ds_path):
     filesdir = ds_path / 'files'
-    os.system(f'cp -r {str(filesdir / "dataset")}/* {str(ds_path)}')
+    os.system(f'cp -r {str(filesdir / "dataset")} {str(ds_path)}')
 
 
 def main():
