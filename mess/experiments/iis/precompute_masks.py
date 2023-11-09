@@ -39,19 +39,22 @@ def precompute_for_dataset(torchvision_dataset, dstdir, mode, reset=False, dev=F
             if dstfile.exists() and not overwrite:
                 continue
             img, mask = torchvision_dataset[i]
-            while img.shape[0] > 1000:
-                try:
-                    if img.shape[0] > 3000:
-                        raise RuntimeError
-                    sam_masks = extract_masks_single(img)
-                    break
-                except RuntimeError:
-                    # downsample to fit memory
-                    img = cv2.resize(img, dsize=(img.shape[0]//2, img.shape[1]//2), interpolation=cv2.INTER_LINEAR)
-                    mask = cv2.resize(mask, dsize=(mask.shape[0]//2, mask.shape[1]//2), interpolation=cv2.INTER_NEAREST)
-                    torch.cuda.empty_cache()
-                    if img.shape[0] < 100:
-                        raise RuntimeError('your image got way too small!')
+            if img.shape[0] > 1000:
+                while True:
+                    try:
+                        if img.shape[0] > 3000:
+                            raise RuntimeError
+                        sam_masks = extract_masks_single(img)
+                        break
+                    except RuntimeError:
+                        # downsample to fit memory
+                        img = cv2.resize(img, dsize=(img.shape[0]//2, img.shape[1]//2), interpolation=cv2.INTER_LINEAR)
+                        mask = cv2.resize(mask, dsize=(mask.shape[0]//2, mask.shape[1]//2), interpolation=cv2.INTER_NEAREST)
+                        torch.cuda.empty_cache()
+                        if img.shape[0] < 100:
+                            raise RuntimeError('your image got way too small!')
+            else:
+                sam_masks = extract_masks_single(img)
             np.save(dstfile, sam_masks)
         if mode == 'dinosam':
             dstfile = dstdir / f'dinosam_feats_{str(i).zfill(ndigits)}.npy'
