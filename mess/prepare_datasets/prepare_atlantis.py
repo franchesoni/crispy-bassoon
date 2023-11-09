@@ -16,23 +16,16 @@ def download_dataset(ds_path):
     """
     # Dataset page: https://github.com/smhassanerfani/atlantis.git
     print('Downloading dataset...')
+    filesdir = ds_path / 'files'
     # Downloading github repo
-    os.system('git clone https://github.com/smhassanerfani/atlantis.git')
-    # Move images and masks to dataset folder
-    os.system('mv atlantis/atlantis ' + str(ds_path))
-    # Delete github repo
-    os.system('rm -R atlantis')
+    os.system(f'git clone https://github.com/smhassanerfani/atlantis.git {filesdir / "atlantisGit"}')
 
+def extract_dataset(ds_path):
+    filesdir = ds_path / 'files'
+    os.system(f'cp -r {filesdir / "atlantisGit/atlantis"}/* {ds_path}')
 
-def main():
-    dataset_dir = Path(os.getenv('DETECTRON2_DATASETS', 'datasets'))
-    ds_path = dataset_dir / 'atlantis'
-    if not ds_path.exists():
-        download_dataset(ds_path)
-
-    assert ds_path.exists(), f'Dataset not found in {ds_path}'
-
-    for split in ['test']:
+def prepare_atlantis(ds_path):
+    for split in ['train', 'test']:
         # create directories
         img_dir = ds_path / 'images_detectron2' / split
         anno_dir = ds_path / 'annotations_detectron2' / split
@@ -49,8 +42,18 @@ def main():
             # Replace grey values with class index
             mask = np.vectorize(color_to_class.get)(np.array(mask)).astype(np.uint8)
             Image.fromarray(mask).save(anno_dir / img_path.name.replace('jpg', 'png'))
+        print(f'Saved images and masks of {ds_path.name} dataset')
 
-    print(f'Saved images and masks of {ds_path.name} dataset')
+
+def main():
+    dataset_dir = Path(os.getenv('DETECTRON2_DATASETS', 'datasets'))
+    ds_path = dataset_dir / 'atlantis'
+    if not ds_path.exists():
+        download_dataset(ds_path)
+        extract_dataset(ds_path)
+
+    assert ds_path.exists(), f'Dataset not found in {ds_path}'
+    prepare_atlantis(ds_path)
 
 
 if __name__ == '__main__':
