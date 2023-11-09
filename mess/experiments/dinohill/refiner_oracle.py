@@ -171,8 +171,9 @@ def main(dstdir, ds_name):
     else:
         metrics_per_class = {}
     for class_ind, class_name in zip(class_indices, class_names):
-        if class_ind in values_to_ignore or class_ind < 8:
+        if class_ind in values_to_ignore:
             continue
+        print('class', class_name)
         if not class_name in metrics_per_class:
             metrics_per_class[class_name] = {}
 
@@ -188,8 +189,10 @@ def main(dstdir, ds_name):
             dstimg = dstdir / f'class_{class_name}_sample_{sample_ind}.png'
             if dstimg.exists():
                 upsampled_mask = np.array(Image.open(dstimg)) > 128
-                
-            else:
+                if upsampled_mask.shape != gt_mask.shape:
+                    # remove dstimg
+                    os.remove(dstimg)
+            if not dstimg.exists():
                 st = time.time()
                 pilimg = Image.fromarray(img)
                 pilmask = Image.fromarray(class_mask)
@@ -197,9 +200,12 @@ def main(dstdir, ds_name):
                 upsampled_mask = upsample_mask(ds_mask, pilimg)
                 print('upsampled in', time.time() - st)
 
-                Image.fromarray((upsampled_mask * 255).astype(np.uint8)).save(dstdir / f'class_{class_name}_sample_{sample_ind}.png')
+                Image.fromarray((upsampled_mask * 255).astype(np.uint8)).save(dstimg)
 
-            metrics = compute_global_metrics(*compute_tps_fps_tns_fns([upsampled_mask], [class_mask]))
+            try:
+                metrics = compute_global_metrics(*compute_tps_fps_tns_fns([upsampled_mask], [class_mask]))
+            except:
+                breakpoint()
             metrics_per_class[class_name][sample_ind] = metrics
         
         with open(dstdir / f'metrics_per_class_{ds_name}.json', 'w') as f:
