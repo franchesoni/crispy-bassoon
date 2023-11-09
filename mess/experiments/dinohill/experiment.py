@@ -178,6 +178,15 @@ def main(precomputed_dir, dstdir, ds_name, seed):
             res = ast.literal_eval(f.read())
         resuming = True
 
+
+
+    print('getting empty mask indices')
+    empty_mask_indices_per_class = {ci: [] for ci in class_indices}
+    for ind, sample in tqdm.tqdm(enumerate(ds), total=len(ds)):
+        for class_ind in class_indices:
+            if (sample[1]==class_ind).sum() == 0:
+                empty_mask_indices_per_class[class_indices].append(ind)
+
     for class_ind, class_name in zip(class_indices, class_names):
         if class_ind in values_to_ignore:
             continue
@@ -194,13 +203,7 @@ def main(precomputed_dir, dstdir, ds_name, seed):
         )
         ds_indices_ind = 0
 
-        print('getting empty mask indices')
-        empty_mask_indices = []
-        for ind, sample in tqdm.tqdm(enumerate(ds), total=len(ds)):
-            if ind > 300 and dev:
-                break
-            if (sample[1]==class_ind).sum() == 0:
-                empty_mask_indices.append(ind)
+        empty_mask_indices = empty_mask_indices_per_class[class_ind]
         max_clicks = (len(ds)-len(empty_mask_indices))*5
         print(f'starting loop for {max_clicks} clicks')
         while True:
