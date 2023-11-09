@@ -36,29 +36,35 @@ def download_dataset(ds_path):
     Downloads the dataset
     """
     print('Downloading dataset...')
+    filesdir = ds_path / 'files'
+    filesdir.mkdir(parents=True)
+
     # Downloading zip
-    gdown.download(id='1diN3tNe2nR1eV3Px4gqlp6wp3XuLBwDy')
-    os.system("unzip TEST.zip -d " + str(ds_path))
-    os.system("rm TEST.zip")
+    gdown.download(id='1diN3tNe2nR1eV3Px4gqlp6wp3XuLBwDy', output=str(filesdir / 'TEST.zip'))
+
+    # Downloading zip
+    gdown.download(id='1YWjUODQWwQ3_vKSytqVdF4recqBOEe72', output=str(filesdir / 'train_val.zip'))
 
 
-def main():
-    dataset_dir = Path(os.getenv("DETECTRON2_DATASETS", "datasets"))
-    ds_path = dataset_dir / "SUIM"
-    if not ds_path.exists():
-        download_dataset(ds_path)
+def extract_dataset(ds_path):
+    filesdir = ds_path / 'files'
+    os.system("unzip " + str(filesdir / "TEST.zip") + " -d " + str(ds_path / 'test'))
+    os.system("unzip " + str(filesdir / "train_val.zip") + " -d " + str(ds_path / 'train'))
 
-    assert ds_path.exists(), f"Dataset not found in {ds_path}"
 
-    for split in ['test']:
+def prepare_suim(ds_path):
+    for split in ['train', 'test']:
         # create directories
         anno_dir = ds_path / 'annotations_detectron2' / split
         os.makedirs(anno_dir, exist_ok=True)
 
-        for mask_path in tqdm.tqdm(sorted((ds_path / split.upper() / 'masks').glob('*.bmp'))):
+        subdir = 'test' if split == 'test' else 'train_val'
+        for mask_path in tqdm.tqdm(sorted((ds_path / split / subdir / 'masks').glob('*.bmp'))):
+            if (anno_dir / f'{mask_path.stem}.png').exists():
+                continue  # allow resume
             # Open mask
             mask = Image.open(mask_path)
-            mask = np.array(mask)
+            mask = ((np.array(mask)>127) * 255).astype(np.uint8)
 
             # Edit annotations using class_dict
             mask = np.apply_along_axis(lambda x: class_dict[tuple(x)], 2, mask).astype(np.uint8)
@@ -68,6 +74,18 @@ def main():
 
         print(f'Saved {split} images and masks of {ds_path.name} dataset')
 
+
+
+def main():
+    dataset_dir = Path(os.getenv("DETECTRON2_DATASETS", "datasets"))
+    ds_path = dataset_dir / "SUIM"
+    if not ds_path.exists():
+        download_dataset(ds_path)
+        extract_dataset(ds_path)
+
+    assert ds_path.exists(), f"Dataset not found in {ds_path}"
+
+    prepare_suim(ds_path)
 
 if __name__ == "__main__":
     main()

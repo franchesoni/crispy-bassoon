@@ -43,6 +43,8 @@ if __name__ == '__main__':
         'foodseg103_sem_seg_test': prepare_foodseg,
         'mhp_v1_sem_seg_train': prepare_mhp_v1,
         'foodseg103_sem_seg_train': prepare_foodseg,
+        'suim_sem_seg_train': prepare_suim,
+        'suim_sem_seg_test': prepare_suim,
 
         # 'atlantis_sem_seg_test': prepare_atlantis,
         # 'isaid_sem_seg_val': prepare_isaid,
@@ -53,7 +55,6 @@ if __name__ == '__main__':
         # 'corrosion_cs_sem_seg_test': prepare_corrosion_cs,
         # 'deepcrack_sem_seg_test': prepare_deepcrack,
         # 'zerowaste_sem_seg_test': prepare_zerowaste,
-        # 'suim_sem_seg_test': prepare_suim,
         # 'cub_200_sem_seg_test': prepare_cub_200,
         # 'cwfid_sem_seg_test': prepare_cwfid,
 
