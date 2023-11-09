@@ -47,6 +47,8 @@ if __name__ == '__main__':
         'suim_sem_seg_test': prepare_suim,
         'zerowaste_sem_seg_train': prepare_zerowaste,
         'zerowaste_sem_seg_test': prepare_zerowaste,
+        'corrosion_cs_sem_seg_train': prepare_corrosion_cs,
+        'corrosion_cs_sem_seg_test': prepare_corrosion_cs,
 
         # 'atlantis_sem_seg_test': prepare_atlantis,
         # 'isaid_sem_seg_val': prepare_isaid,
@@ -54,7 +56,6 @@ if __name__ == '__main__':
         # 'kvasir_instrument_sem_seg_test': prepare_kvasir_instrument,
         # 'paxray_sem_seg_test_lungs': prepare_paxray,
         # 'pst900_sem_seg_test': prepare_pst900,
-        # 'corrosion_cs_sem_seg_test': prepare_corrosion_cs,
         # 'deepcrack_sem_seg_test': prepare_deepcrack,
         # 'zerowaste_sem_seg_test': prepare_zerowaste,
         # 'cub_200_sem_seg_test': prepare_cub_200,
