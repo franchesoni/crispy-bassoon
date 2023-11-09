@@ -186,9 +186,3 @@ def propagate_dino(clicks, state):
     pred_masks = [(pred_mask>0).astype(bool) for pred_mask in pred_masks]
     return pred_masks, state, s_F
 
-
-
-
-
-
-
