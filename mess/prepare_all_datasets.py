@@ -24,37 +24,6 @@ from prepare_datasets import (
     # prepare_mysbd,
     # prepare_mygrabcut,
 )
-# prepare datasets
-dataset_dict = {
-    'mhp_v1_sem_seg_test': prepare_mhp_v1,
-    'foodseg103_sem_seg_test': prepare_foodseg,
-    'mhp_v1_sem_seg_train': prepare_mhp_v1,
-    'foodseg103_sem_seg_train': prepare_foodseg,
-    'suim_sem_seg_train': prepare_suim,
-    'suim_sem_seg_test': prepare_suim,
-    'zerowaste_sem_seg_train': prepare_zerowaste,
-    'zerowaste_sem_seg_test': prepare_zerowaste,
-    'corrosion_cs_sem_seg_train': prepare_corrosion_cs,
-    'corrosion_cs_sem_seg_test': prepare_corrosion_cs,
-    'atlantis_sem_seg_train': prepare_atlantis,
-    'atlantis_sem_seg_test': prepare_atlantis,
-
-    # 'isaid_sem_seg_val': prepare_isaid,
-    # 'worldfloods_sem_seg_test_irrg': prepare_worldfloods,
-    # 'kvasir_instrument_sem_seg_test': prepare_kvasir_instrument,
-    # 'paxray_sem_seg_test_lungs': prepare_paxray,
-    # 'pst900_sem_seg_test': prepare_pst900,
-    # 'deepcrack_sem_seg_test': prepare_deepcrack,
-    # 'cub_200_sem_seg_test': prepare_cub_200,
-    # 'cwfid_sem_seg_test': prepare_cwfid,
-
-    # 'ndd20_sem_seg_test': prepare_ndd20,
-    # 'mypascalvoc_sem_seg_test': prepare_mypascalvoc,
-    # 'mysbd_sem_seg_test': prepare_mysbd,
-    # 'mygrabcut_sem_seg_test': prepare_mygrabcut,
-}
-DATASETS = sorted(list(dataset_dict.keys()))
-
 
 if __name__ == '__main__':
     # parser to get dataset directory
@@ -67,6 +36,36 @@ if __name__ == '__main__':
     os.environ['DETECTRON2_DATASETS'] = args.dataset_dir
     os.makedirs(args.dataset_dir, exist_ok=True)
     import datasets
+
+    # prepare datasets
+    dataset_dict = {
+        'mhp_v1_sem_seg_test': prepare_mhp_v1,
+        'foodseg103_sem_seg_test': prepare_foodseg,
+        'mhp_v1_sem_seg_train': prepare_mhp_v1,
+        'foodseg103_sem_seg_train': prepare_foodseg,
+        'suim_sem_seg_train': prepare_suim,
+        'suim_sem_seg_test': prepare_suim,
+        'zerowaste_sem_seg_train': prepare_zerowaste,
+        'zerowaste_sem_seg_test': prepare_zerowaste,
+        'corrosion_cs_sem_seg_train': prepare_corrosion_cs,
+        'corrosion_cs_sem_seg_test': prepare_corrosion_cs,
+        'atlantis_sem_seg_train': prepare_atlantis,
+        'atlantis_sem_seg_test': prepare_atlantis,
+
+        # 'isaid_sem_seg_val': prepare_isaid,
+        # 'worldfloods_sem_seg_test_irrg': prepare_worldfloods,
+        # 'kvasir_instrument_sem_seg_test': prepare_kvasir_instrument,
+        # 'paxray_sem_seg_test_lungs': prepare_paxray,
+        # 'pst900_sem_seg_test': prepare_pst900,
+        # 'deepcrack_sem_seg_test': prepare_deepcrack,
+        # 'cub_200_sem_seg_test': prepare_cub_200,
+        # 'cwfid_sem_seg_test': prepare_cwfid,
+
+        # 'ndd20_sem_seg_test': prepare_ndd20,
+        # 'mypascalvoc_sem_seg_test': prepare_mypascalvoc,
+        # 'mysbd_sem_seg_test': prepare_mysbd,
+        # 'mygrabcut_sem_seg_test': prepare_mygrabcut,
+    }
 
     # print status of datasets
     print('Dataset: Status')
