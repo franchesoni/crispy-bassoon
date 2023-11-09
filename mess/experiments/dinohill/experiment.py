@@ -8,7 +8,6 @@ import tqdm
 import cv2
 import matplotlib.pyplot as plt
 from pathlib import Path
-from skimage.feature import peak_local_max
 
 
 from mess.datasets.TorchvisionDataset import TorchvisionDataset, get_detectron2_datasets
@@ -57,44 +56,6 @@ def visualize(img, class_mask, pred, clicks):
     plt.imsave("tmp/current.png", bigimg)
     breakpoint()
     return bigimg
-
-def visualize_points(img, gt_mask, synthetic_points, dstdir="tmp"):
-    """
-    Save the img with the mask overlapping and the synthetic points on top.
-    The synthetic points are tuples with (sample_ind, row, col, logit).
-    """
-    if gt_mask.max() <= 1:
-        gt_mask = (gt_mask * 255).astype(np.uint8)
-    sample_ind = 0
-    if not os.path.exists(dstdir):
-        os.makedirs(dstdir)
-    fig, ax = plt.subplots(1, 1, figsize=(10, 10))
-    ax.imshow(
-        np.clip(
-            norm(img)
-            + gt_mask[..., None] * np.array([1.0, 0.0, 1.0])[None, None] * 0.3,
-            0,
-            1,
-        )
-    )
-    for point in synthetic_points:
-        sample_ind, row, col, logit = point
-        # get the color according to the logit. Logit = -1 is red   Logit = 1 is blue
-        if str(logit) in ["True", "False"]:
-            logit = 1 if logit else -1
-        color = (max(0, -logit), 0, max(0, logit))
-        ax.scatter(
-            (col / 46 + 1 / 46 / 2) * img.shape[1],
-            (row / 46 + 1 / 46 / 2) * img.shape[0],
-            color=color,
-            s=100,
-            marker="s",
-        )
-    plt.savefig(os.path.join(dstdir, f"current.png"))
-    plt.close()
-    print("showed image", sample_ind)
-    breakpoint()
-    pass
 
 
 def to_numpy(x):
@@ -261,7 +222,6 @@ def main(precomputed_dir, dstdir, ds_name, seed):
                 allow_pickle=True,
             )
             # make prediction
-            rowf, colf = DINO_RESIZE[0] / img.shape[0], DINO_RESIZE[1] / img.shape[1]
             pred = classify_patches(clicks_so_far, seed_vectors, feat_map)  # in order of certainty, param can be number of synthetic points (if int) or a score threshold (if float)
 
             if plot:
