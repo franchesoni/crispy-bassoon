@@ -58,7 +58,7 @@ def prepare_suim(ds_path):
         anno_dir = ds_path / 'annotations_detectron2' / split
         os.makedirs(anno_dir, exist_ok=True)
 
-        subdir = 'test' if split == 'test' else 'train_val'
+        subdir = 'TEST' if split == 'test' else 'train_val'
         for mask_path in tqdm.tqdm(sorted((ds_path / split / subdir / 'masks').glob('*.bmp'))):
             if (anno_dir / f'{mask_path.stem}.png').exists():
                 continue  # allow resume
