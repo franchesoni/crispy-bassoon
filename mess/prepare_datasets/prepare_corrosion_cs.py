@@ -46,7 +46,7 @@ def prepare_corrosion(ds_path):
 
 def main():
     dataset_dir = Path(os.getenv('DETECTRON2_DATASETS', 'datasets'))
-    ds_path = dataset_dir / 'Corrosion Condition State Classification'.strip()
+    ds_path = dataset_dir / 'Corrosion Condition State Classification'.replace(' ','')
     if not ds_path.exists():
         download_dataset(ds_path)
         extract_dataset(ds_path)
