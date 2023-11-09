@@ -45,6 +45,8 @@ if __name__ == '__main__':
         'foodseg103_sem_seg_train': prepare_foodseg,
         'suim_sem_seg_train': prepare_suim,
         'suim_sem_seg_test': prepare_suim,
+        'zerowaste_sem_seg_train': prepare_zerowaste,
+        'zerowaste_sem_seg_test': prepare_zerowaste,
 
         # 'atlantis_sem_seg_test': prepare_atlantis,
         # 'isaid_sem_seg_val': prepare_isaid,
