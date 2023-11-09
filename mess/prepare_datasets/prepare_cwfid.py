@@ -21,11 +21,11 @@ def download_dataset(ds_path):
     # Dataset page: https://github.com/cwfid/dataset.git
     print('Downloading dataset...')
     # Downloading dataset from git repo
-    os.system(f'git clone https://github.com/cwfid/dataset.git {filesdir}')
+    os.system(f'git clone https://github.com/cwfid/dataset.git {filesdir / "dataset"}')  # contents will be in filesdir / 'dataset'
 
 def extract_dataset(ds_path):
     filesdir = ds_path / 'files'
-    os.system(f'cp -r {str(filesdir / "dataset")} {str(ds_path)}')
+    os.system(f'cp -r {str(filesdir / "dataset")}/* {str(ds_path)}')
 
 
 def main():
