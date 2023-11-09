@@ -49,15 +49,15 @@ if __name__ == '__main__':
         'zerowaste_sem_seg_test': prepare_zerowaste,
         'corrosion_cs_sem_seg_train': prepare_corrosion_cs,
         'corrosion_cs_sem_seg_test': prepare_corrosion_cs,
+        'atlantis_sem_seg_train': prepare_atlantis,
+        'atlantis_sem_seg_test': prepare_atlantis,
 
-        # 'atlantis_sem_seg_test': prepare_atlantis,
         # 'isaid_sem_seg_val': prepare_isaid,
         # 'worldfloods_sem_seg_test_irrg': prepare_worldfloods,
         # 'kvasir_instrument_sem_seg_test': prepare_kvasir_instrument,
         # 'paxray_sem_seg_test_lungs': prepare_paxray,
         # 'pst900_sem_seg_test': prepare_pst900,
         # 'deepcrack_sem_seg_test': prepare_deepcrack,
-        # 'zerowaste_sem_seg_test': prepare_zerowaste,
         # 'cub_200_sem_seg_test': prepare_cub_200,
         # 'cwfid_sem_seg_test': prepare_cwfid,
 
