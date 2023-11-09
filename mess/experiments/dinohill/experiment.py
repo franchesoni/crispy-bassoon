@@ -1,7 +1,7 @@
 import os
 from config import datasets_path
-
 os.environ["DETECTRON2_DATASETS"] = str(datasets_path)
+import ast
 import torch
 import numpy as np
 import tqdm
@@ -170,8 +170,19 @@ def main(precomputed_dir, dstdir, ds_name, seed):
     metrics_after_per_class = {}
     metrics_before_per_class = {}
     sample_inds_per_class = {}
+
+    if not (dstdir / f'results_seed_{seed}.json').exists():
+        resuming = False
+    else:
+        with open(dstdir / f'results_seed_{seed}.json', 'r') as f:
+            res = ast.literal_eval(f.read())
+        resuming = True
+
     for class_ind, class_name in zip(class_indices, class_names):
         if class_ind in values_to_ignore:
+            continue
+        if resuming and class_ind in res['metrics_after']:
+            print('skipping class', class_name)
             continue
         print("running class", class_name)
  
