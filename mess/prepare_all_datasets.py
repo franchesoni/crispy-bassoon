@@ -51,6 +51,8 @@ if __name__ == '__main__':
         'corrosion_cs_sem_seg_test': prepare_corrosion_cs,
         'atlantis_sem_seg_train': prepare_atlantis,
         'atlantis_sem_seg_test': prepare_atlantis,
+        'cwfid_sem_seg_train': prepare_cwfid,
+        'cwfid_sem_seg_test': prepare_cwfid,
 
         # 'isaid_sem_seg_val': prepare_isaid,
         # 'worldfloods_sem_seg_test_irrg': prepare_worldfloods,
@@ -59,7 +61,6 @@ if __name__ == '__main__':
         # 'pst900_sem_seg_test': prepare_pst900,
         # 'deepcrack_sem_seg_test': prepare_deepcrack,
         # 'cub_200_sem_seg_test': prepare_cub_200,
-        # 'cwfid_sem_seg_test': prepare_cwfid,
 
         # 'ndd20_sem_seg_test': prepare_ndd20,
         # 'mypascalvoc_sem_seg_test': prepare_mypascalvoc,

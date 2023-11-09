@@ -9,18 +9,23 @@ from PIL import Image
 
 train_ids = [2, 5, 6, 7, 8, 11, 12, 14, 16, 17, 18, 19, 20, 23, 24, 25, 27, 28, 31, 33, 34, 36, 37, 38, 40, 41, 42, 43,
              45, 46, 49, 50, 51, 52, 53, 55, 56, 57, 58, 59]
-test_ids = [1, 3, 4, 9, 10, 13, 15, 21, 22, 26, 28, 29, 30, 32, 35, 39, 44, 47, 48, 54, 60]
+test_ids = [1, 3, 4, 9, 10, 13, 15, 21, 22, 26, 29, 30, 32, 35, 39, 44, 47, 48, 54, 60]
 
 
 def download_dataset(ds_path):
     """
     Downloads the dataset
     """
+    filesdir = ds_path / 'files'
+    filesdir.mkdir(parents=True)
     # Dataset page: https://github.com/cwfid/dataset.git
     print('Downloading dataset...')
     # Downloading dataset from git repo
-    os.system('git clone https://github.com/cwfid/dataset.git')
-    os.system('mv dataset ' + str(ds_path))
+    os.system(f'git clone https://github.com/cwfid/dataset.git {filesdir / "dataset"}')
+
+def extract_dataset(ds_path):
+    filesdir = ds_path / 'files'
+    os.system(f'cp -r {str(filesdir / "dataset")} {str(ds_path)}')
 
 
 def main():
@@ -28,10 +33,11 @@ def main():
     ds_path = dataset_dir / 'cwfid'
     if not ds_path.exists():
         download_dataset(ds_path)
+        extract_dataset(ds_path)
 
     assert ds_path.exists(), f'Dataset not found in {ds_path}'
 
-    for split in ['test']:
+    for split in ['train', 'test']:
         # create directory
         anno_dir = ds_path / 'annotations_detectron2' / split
         os.makedirs(anno_dir, exist_ok=True)
@@ -39,7 +45,7 @@ def main():
         ids = test_ids if split == 'test' else train_ids
         for id in tqdm.tqdm(ids):
             # get mask path
-            mask_path = ds_path / 'annotations' / f'{id:03}_annotation.png'
+            mask_path = ds_path / 'dataset' / 'annotations' / f'{id:03}_annotation.png'
             # Open mask
             mask = np.array(Image.open(mask_path))
 
