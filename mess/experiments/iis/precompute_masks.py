@@ -12,9 +12,11 @@ from PIL import Image
 from IISS.extract_masks import extract_masks_single, get_embedding_sam
 from IISS.compute_features import compute_features_list
 from mess.datasets.TorchvisionDataset import TorchvisionDataset, get_detectron2_datasets
+from IISS.project_masks import project_masks
 
 
-def precompute_for_dataset(torchvision_dataset, dstdir, reset=False, dev=False, dino=False, sam=False, sam_embeddings=False, overwrite=False, return_if_dir_exists=True):
+def precompute_for_dataset(torchvision_dataset, dstdir, mode, reset=False, dev=False, overwrite=False, return_if_dir_exists=True):
+    assert mode in ['sam', 'dino', 'sam_embeddings', 'dinosam']
     ndigits = len(str(len(torchvision_dataset)))
     dstdir = Path(dstdir)
     if dstdir.exists():
@@ -31,21 +33,44 @@ def precompute_for_dataset(torchvision_dataset, dstdir, reset=False, dev=False, 
     pr.enable()
 
     for i in tqdm.tqdm(range(len(torchvision_dataset))):
-        if sam:
+        if mode == 'sam':
             dstfile = dstdir / f'sam_masks_{str(i).zfill(ndigits)}.npy'
             if dstfile.exists() and not overwrite:
                 continue
             img, mask = torchvision_dataset[i]
             sam_masks = extract_masks_single(img)
             np.save(dstfile, sam_masks)
-        if dino:
+        if mode == 'dinosam':
+            dstfile = dstdir / f'dinosam_feats_{str(i).zfill(ndigits)}.npy'
+            if dstfile.exists() and not overwrite:
+                continue
+            # handle sam masks
+            sammasks_dstfile = dstdir / f'sam_masks_{str(i).zfill(ndigits)}.npy'
+            if sammasks_dstfile.exists() and not overwrite:  # laod existing masks
+                sam_masks = np.load(sammasks_dstfile, allow_pickle=True)
+            else:  # compute and save masks
+                img, mask = torchvision_dataset[i]
+                sam_masks = extract_masks_single(img)
+                np.save(sammasks_dstfile, sam_masks)
+            # handle dino features
+            feats_dstfile = dstdir / f'img_feats_{str(i).zfill(ndigits)}.npy'
+            if feats_dstfile.exists() and not overwrite:
+                img_features = np.load(feats_dstfile, allow_pickle=True)
+            else:
+                img, mask = torchvision_dataset[i]  # maybe repeated, but it's ok
+                img_features = compute_features_list([img])[0]
+                np.save(feats_dstfile, img_features)
+            # combine
+            dinosam_feats = project_masks(sam_masks, img_features)
+            np.save(dstfile, dinosam_feats)
+        if mode == 'dino':
             dstfile = dstdir / f'img_features_{str(i).zfill(ndigits)}.npy'
             if dstfile.exists() and not overwrite:
                 continue
             img, mask = torchvision_dataset[i]
             img_features = compute_features_list([img])[0]
             np.save(dstfile, img_features)
-        if sam_embeddings:
+        if mode == 'sam_embeddings':
             dstfile = dstdir / f'sam_embedding_{str(i).zfill(ndigits)}.npy'
             if dstfile.exists() and not overwrite:
                 continue
@@ -103,7 +128,7 @@ def describe(var, level=0):
         print(f'{indent}Value: {var}')
 
 def main(mode, dev=False, ds=None):
-    assert mode in ['sam', 'dino', 'describe', 'sam_embeddings']
+    assert mode in ['sam', 'dino', 'describe', 'sam_embeddings', 'dinosam']
     ds_names = get_detectron2_datasets()
 
     DATASETS=[
@@ -141,29 +166,11 @@ def main(mode, dev=False, ds=None):
         print('not found:', not_found)
         print('='*80)
 
-    if mode == 'sam':
-        # process masks
-        for ds_name in ds_names:
-            print('SAM processing', ds_name)
-            ds = TorchvisionDataset(ds_name, transform=to_numpy, mask_transform=to_numpy)
-            precompute_for_dataset(ds, os.path.join(datasets_path,  f'precomputed/{ds_name}/sam'), reset=False, dev=dev, dino=False, sam=True, overwrite=False, return_if_dir_exists=False)
-
-    if mode == 'dino':
-        # process features
-        for ds_name in ds_names:
-            print('DINO processing', ds_name)
-            ds = TorchvisionDataset(ds_name, transform=to_numpy, mask_transform=to_numpy)
-            precompute_for_dataset(ds, os.path.join(datasets_path, f'precomputed/{ds_name}/dino'), reset=False, dev=dev, dino=True, sam=False, overwrite=False, return_if_dir_exists=False)
-
-    if mode == 'sam_embeddings':
-        # process masks
-        for ds_name in ds_names:
-            print('SAM embeddings processing', ds_name)
-            ds = TorchvisionDataset(ds_name, transform=to_numpy, mask_transform=to_numpy)
-            precompute_for_dataset(ds, os.path.join(datasets_path,  f'precomputed/{ds_name}/sam_embeddings'), reset=False, dev=dev, dino=False, sam=False, sam_embeddings=True, overwrite=False, return_if_dir_exists=False)
-
-
-
+    # process masks
+    for ds_name in ds_names:
+        print(f'{mode} processing', ds_name)
+        ds = TorchvisionDataset(ds_name, transform=to_numpy, mask_transform=to_numpy)
+        precompute_for_dataset(ds, os.path.join(datasets_path,  f'precomputed/{ds_name}/{mode}'), reset=False, dev=dev, mode=mode, overwrite=False, return_if_dir_exists=False)
     print('great!')
 
 if __name__ == '__main__':
