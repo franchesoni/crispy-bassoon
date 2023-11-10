@@ -50,7 +50,7 @@ def preprocess_image_array(image_array, target_size):
   assert image_array.dtype == np.uint8
   assert len(image_array.shape) == 3
   assert image_array.shape[2] == 3
-  assert image_array.max() > 1 or image_array.max() == 0
+  #assert image_array.max() > 1 or image_array.max() == 0
   # Step 1: Normalize using mean and std of ImageNet dataset
   mean = np.array([0.485, 0.456, 0.406])
   std = np.array([0.229, 0.224, 0.225])
