@@ -90,9 +90,15 @@ def main(mode, ds=None, describe=False):
         'mhp_v1_sem_seg_test',
         'suim_sem_seg_test',
         'zerowaste_sem_seg_test',
-        # 'atlantis_sem_seg_test', 'chase_db1_sem_seg_test', 'corrosion_cs_sem_seg_test', 'cryonuseg_sem_seg_test', 'cub_200_sem_seg_test', 'cwfid_sem_seg_test', 'dark_zurich_sem_seg_val', 'deepcrack_sem_seg_test', 'dram_sem_seg_test', 
+        'atlantis_sem_seg_train',
+        'cwfid_sem_seg_train',
+        'kvasir_instrument_sem_seg_train',
+        'atlantis_sem_seg_test',
+        'cwfid_sem_seg_test',
+        'kvasir_instrument_sem_seg_test',
+        #'chase_db1_sem_seg_test', 'corrosion_cs_sem_seg_test', 'cryonuseg_sem_seg_test', 'cub_200_sem_seg_test',  'dark_zurich_sem_seg_val', 'deepcrack_sem_seg_test', 'dram_sem_seg_test', 
 
-        # 'isaid_sem_seg_val', 'kvasir_instrument_sem_seg_test',
+        # 'isaid_sem_seg_val', 
         # 'paxray_sem_seg_test_bones', 'paxray_sem_seg_test_diaphragm', 'paxray_sem_seg_test_lungs', 'paxray_sem_seg_test_mediastinum', 'pst900_sem_seg_test', 
 
         # 'worldfloods_sem_seg_test_irrg',

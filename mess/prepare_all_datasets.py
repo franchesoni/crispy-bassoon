@@ -53,10 +53,11 @@ if __name__ == '__main__':
         'atlantis_sem_seg_test': prepare_atlantis,
         'cwfid_sem_seg_train': prepare_cwfid,
         'cwfid_sem_seg_test': prepare_cwfid,
+        'kvasir_instrument_sem_seg_train': prepare_kvasir_instrument,
+        'kvasir_instrument_sem_seg_test': prepare_kvasir_instrument,
 
         # 'isaid_sem_seg_val': prepare_isaid,
         # 'worldfloods_sem_seg_test_irrg': prepare_worldfloods,
-        # 'kvasir_instrument_sem_seg_test': prepare_kvasir_instrument,
         # 'paxray_sem_seg_test_lungs': prepare_paxray,
         # 'pst900_sem_seg_test': prepare_pst900,
         # 'deepcrack_sem_seg_test': prepare_deepcrack,

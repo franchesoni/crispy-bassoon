@@ -8,31 +8,39 @@ from pathlib import Path
 from PIL import Image
 
 
-def download_dataset(dataset_dir, ds_path):
+def download_dataset(ds_path):
     """
     Downloads the dataset
     """
     print('Downloading dataset...')
-    os.system("wget https://datasets.simula.no/downloads/kvasir-instrument.zip")
-    os.system("unzip kvasir-instrument.zip -d " + str(dataset_dir))
-    os.system("rm kvasir-instrument.zip")
+    filesdir = ds_path / 'files'
+    if (filesdir / 'kvasir-instrument.zip').exists():
+        print('dataset already downloaded')
+        return
+    filesdir.mkdir(parents=True)
+    os.system(f"wget https://datasets.simula.no/downloads/kvasir-instrument.zip -P {str(filesdir)}")
 
+def extract_dataset(ds_path):
+    filesdir = ds_path / 'files'
+    command = f"unzip {str(filesdir / 'kvasir-instrument.zip')} -d " + str(ds_path)
+    os.system(command)
+    os.system(f"mv {str(ds_path / 'kvasir-instrument')}/* {str(ds_path)}")
+    os.system(f"rm -rf {str(ds_path / 'kvasir-instrument')}")
     print('Creating images directory...')
     os.system(f"tar -xvzf {ds_path}/images.tar.gz -C {ds_path}")
     os.system(f"tar -xvzf {ds_path}/masks.tar.gz -C {ds_path}")
-    os.system(f"rm {ds_path}/images.tar.gz")
-    os.system(f"rm {ds_path}/masks.tar.gz")
 
 
 def main():
     dataset_dir = Path(os.getenv("DETECTRON2_DATASETS", "datasets"))
     ds_path = dataset_dir / "kvasir-instrument"
-    if not ds_path.exists():
-        download_dataset(dataset_dir, ds_path)
+    if not ds_path.exists() or True:
+        download_dataset(ds_path)
+        extract_dataset(ds_path)
 
     assert ds_path.exists(), f"Dataset not found in {ds_path / 'images'}"
 
-    for split in ['test']:
+    for split in ['train', 'test']:
         # create directories
         img_dir = ds_path / 'images_detectron2' / split
         anno_dir = ds_path / 'annotations_detectron2' / split
