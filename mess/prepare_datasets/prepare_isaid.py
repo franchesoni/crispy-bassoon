@@ -2,11 +2,12 @@
 # run python mess/prepare_datasets/prepare_isaid.py
 
 import os
-import tqdm
+import shutil
 import gdown
 import numpy as np
 from pathlib import Path
 from PIL import Image
+import tqdm
 
 
 # iSAID dataset color to class mapping
@@ -114,6 +115,40 @@ def prepare_isaid(ds_path):
         print(f'Saved {split} images and masks of {ds_path.name} dataset')
 
 
+def postprepare(ds_path):
+    """We'll move 9/10ths of the data to another folder because the dataset is too big"""
+    img_dir_out = ds_path / 'images_detectron2' / 'train_removed'
+    assert not img_dir_out.exists(), 'this func should run once only and can not be run again'
+    for split in ['train', 'val']:
+        # create directories
+        img_dir = ds_path / 'images_detectron2' / split
+        anno_dir = ds_path / 'annotations_detectron2' / split
+        img_dir_out = ds_path / 'images_detectron2' / (split+'_removed')
+        anno_dir_out = ds_path / 'annotations_detectron2' / (split+'_removed')
+        shutil.move(str(img_dir), str(img_dir_out))
+        shutil.move(str(anno_dir), str(anno_dir_out))
+        img_dir.mkdir(exist_ok=True, parents=True)
+        anno_dir.mkdir(exist_ok=True, parents=True)
+
+        img_files = sorted(list(img_dir_out.glob("*.png")))
+        ann_files = sorted(list(anno_dir_out.glob("*.png")))
+        np.random.seed(0)
+        selected_img_files = np.random.choice(img_files, size=len(img_files)//10, replace=False)
+        selected_ann_files = [anno_dir_out / img_file.name for img_file in selected_img_files]
+        assert all([ann_file in ann_files for ann_file in selected_ann_files])
+
+        # now move the ones we keep
+        for filename in tqdm.tqdm(selected_img_files):
+            shutil.move(str(filename), str(img_dir / filename.name))
+        for filename in tqdm.tqdm(selected_ann_files):
+            shutil.move(str(filename), str(anno_dir / filename.name))
+
+
+            
+
+        
+
+
 
 
 def main():
@@ -127,6 +162,7 @@ def main():
     assert ds_path.exists(), f'Dataset not found in {ds_path}'
 
     prepare_isaid(ds_path)
+    postprepare(ds_path)  # an exception to reduce n images x10
 
 if __name__ == '__main__':
     main()
