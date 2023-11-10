@@ -2,15 +2,14 @@
 Main loop to run the experiment of how SEG-GPT performance changes with the number of shots.
 This code runs only for one seed. In order to run for multiple seeds, launch (if possible parallel) multiple instances of this script with different seeds.
 """
-import argparse
+# set detectron datasets, you're supposed to run this from crispy-bassoon
 import os
+from config import datasets_path
+os.environ['DETECTRON2_DATASETS'] = str(datasets_path)
+import argparse
 import sys
 import tempfile
 import typing as T
-
-# TODO: Replace this with the correct path to the datasets
-os.environ["DETECTRON2_DATASETS"] = "/mnt/adisk/franchesoni/messdata"
-
 
 import numpy as np
 import torch
@@ -19,7 +18,7 @@ from PIL import Image
 from skimage.morphology import binary_dilation, binary_erosion
 
 # TODO: Replace this with the correct path to the SegGPT repository
-sys.path.append("/home/emasquil/workspace/Painter/SegGPT/SegGPT_inference")
+sys.path.append("seg_gpt/Painter/SegGPT/SegGPT_inference")
 import models_seggpt
 from seggpt_engine import inference_image
 
@@ -28,7 +27,7 @@ from mess.datasets.TorchvisionDataset import TorchvisionDataset
 from seg_gpt.metrics import compute_global_metrics, compute_tps_fps_tns_fns
 
 # TODO: Adjust the maximum number of shots depending on GPU size. For a quick try, use as NUMBER_OF_SHOTS = [MAXIMUM_NUMBER] and check if there's no CUDA error
-NUMBER_OF_SHOTS = [i for i in range(1, 6)]
+NUMBER_OF_SHOTS = [i for i in range(1, 8)]
 CLASSES_TO_IGNORE = [
     "background",
     "others",
@@ -74,7 +73,7 @@ if __name__ == "__main__":
     model = getattr(models_seggpt, "seggpt_vit_large_patch16_input896x448")()
     model.seg_type = "instance"
     checkpoint = torch.load(
-        "/home/emasquil/workspace/Painter/SegGPT/SegGPT_inference/seggpt_vit_large.pth"
+        "Painter/SegGPT/SegGPT_inference/seggpt_vit_large.pth"
     )
     _ = model.load_state_dict(checkpoint["model"], strict=False)
     model.eval()
@@ -103,13 +102,7 @@ if __name__ == "__main__":
         ind
         for ind, cls_name in zip(class_indices, class_names)
         if cls_name
-        in [
-            "background",
-            "others",
-            "unlabeled",
-            "background (waterbody)",
-            "background or trash",
-        ]
+        in CLASSES_TO_IGNORE
     ]
     class_img_mapping = get_class_img_mapping(train_ds, values_to_ignore)
     test_class_img_mapping = get_class_img_mapping(test_ds, values_to_ignore)
