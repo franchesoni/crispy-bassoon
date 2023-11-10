@@ -100,7 +100,9 @@ def main(mode, ds=None, describe=False):
         'isaid_sem_seg_val',  
         'deepcrack_sem_seg_train',
         'deepcrack_sem_seg_test',
-        #'chase_db1_sem_seg_test', 'corrosion_cs_sem_seg_test', 'cryonuseg_sem_seg_test', 'cub_200_sem_seg_test',  'dark_zurich_sem_seg_val', 'deepcrack_sem_seg_test', 'dram_sem_seg_test', 
+        'corrosion_cs_sem_seg_train', 
+        'corrosion_cs_sem_seg_test', 
+        #'chase_db1_sem_seg_test', 'cryonuseg_sem_seg_test', 'cub_200_sem_seg_test',  'dark_zurich_sem_seg_val', 'deepcrack_sem_seg_test', 'dram_sem_seg_test', 
 
         # 'isaid_sem_seg_val', 
         # 'paxray_sem_seg_test_bones', 'paxray_sem_seg_test_diaphragm', 'paxray_sem_seg_test_lungs', 'paxray_sem_seg_test_mediastinum', 'pst900_sem_seg_test', 
@@ -124,20 +126,21 @@ def main(mode, ds=None, describe=False):
         found = ds_names
 
     # processing cwfid_sem_seg_test <- INCOMPLETE SAM
-    complete, uncomplete = [], []
+    complete, incomplete = [], []
     # process masks
     for ds_name in found:
         print(f'checking {mode}...', ds_name)
         ds = TorchvisionDataset(ds_name, transform=to_numpy, mask_transform=to_numpy)
-        ratio_completed = len(os.listdir(os.path.join(datasets_path, f'precomputed/{ds_name}/{mode}'))) / len(ds) 
+        srcdir = Path(os.path.join(datasets_path, f'precomputed/{ds_name}/{mode}'))
+        ratio_completed = len(os.listdir(srcdir)) / len(ds) if srcdir.exists() else 0
         print('completed', ratio_completed*100, '%')
         if ratio_completed == 1:
             complete.append(ds_name)
         else:
-            uncomplete.append(ds_name)
+            incomplete.append(ds_name)
     print('='*80)
     print('complete:', complete)
-    print('uncomplete:', uncomplete)
+    print('incomplete:', incomplete)
 
     print('great!')
 
