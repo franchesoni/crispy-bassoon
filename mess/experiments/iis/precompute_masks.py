@@ -69,7 +69,7 @@ def precompute_for_dataset(torchvision_dataset, dstdir, mode, reset=False, dev=F
                 sam_masks = extract_masks_single(img)
                 np.save(sammasks_dstfile, sam_masks)
             # handle dino features
-            feats_dstfile = dstdir / f'img_feats_{str(i).zfill(ndigits)}.npy'
+            feats_dstfile = dstdir / f'dinosamfeats_{str(i).zfill(ndigits)}.npy'
             if feats_dstfile.exists() and not overwrite:
                 img_features = np.load(feats_dstfile, allow_pickle=True)
             else:
