@@ -13,10 +13,14 @@ def download_dataset(ds_path):
     Downloads the dataset
     """
     print('Downloading dataset...')
+    filesdir = ds_path / 'files'
+    filesdir.mkdir(parents=True, exist_ok=True)
     # Downloading git repo with zip
-    os.system('git clone https://github.com/yhlleo/DeepCrack.git')
-    os.system('unzip DeepCrack/dataset/DeepCrack.zip -d ' + str(ds_path))
-    os.system('rm -R DeepCrack')
+    os.system('git clone https://github.com/yhlleo/DeepCrack.git ' + str(filesdir / 'DeepCrackGit'))
+
+def extract_dataset(ds_path):
+    filesdir = ds_path / 'files'
+    os.system(f'unzip {str(filesdir / "DeepCrackGit/dataset/DeepCrack.zip")} -d ' + str(ds_path))
 
 
 def main():
@@ -24,10 +28,11 @@ def main():
     ds_path = dataset_dir / 'DeepCrack'
     if not ds_path.exists():
         download_dataset(ds_path)
+        extract_dataset(ds_path)
 
     assert ds_path.exists(), f'Dataset not found in {ds_path}'
 
-    for split in ['test']:
+    for split in ['train' 'test']:
         # create directory
         anno_dir = ds_path / 'annotations_detectron2' / split
         os.makedirs(anno_dir, exist_ok=True)

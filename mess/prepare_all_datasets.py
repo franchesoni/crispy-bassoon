@@ -39,29 +39,30 @@ if __name__ == '__main__':
 
     # prepare datasets
     dataset_dict = {
-        'mhp_v1_sem_seg_test': prepare_mhp_v1,
+        'mhp_v1_sem_seg_test': prepare_mhp_v1,  # natural images
         'mhp_v1_sem_seg_train': prepare_mhp_v1,
-        'foodseg103_sem_seg_test': prepare_foodseg,
+        'foodseg103_sem_seg_test': prepare_foodseg,  # food
         'foodseg103_sem_seg_train': prepare_foodseg,
-        'suim_sem_seg_train': prepare_suim,
+        'suim_sem_seg_train': prepare_suim,  # underwater
         'suim_sem_seg_test': prepare_suim,
-        'zerowaste_sem_seg_train': prepare_zerowaste,
+        'zerowaste_sem_seg_train': prepare_zerowaste,  # industrial, waste sorting
         'zerowaste_sem_seg_test': prepare_zerowaste,
-        'corrosion_cs_sem_seg_train': prepare_corrosion_cs,
+        'corrosion_cs_sem_seg_train': prepare_corrosion_cs,  # materials
         'corrosion_cs_sem_seg_test': prepare_corrosion_cs,
-        'atlantis_sem_seg_train': prepare_atlantis,
+        'atlantis_sem_seg_train': prepare_atlantis,  # infrastructure / landscapes
         'atlantis_sem_seg_test': prepare_atlantis,
-        'cwfid_sem_seg_train': prepare_cwfid,
+        'cwfid_sem_seg_train': prepare_cwfid,  # agricultural
         'cwfid_sem_seg_test': prepare_cwfid,
-        'kvasir_instrument_sem_seg_train': prepare_kvasir_instrument,
+        'kvasir_instrument_sem_seg_train': prepare_kvasir_instrument,  # medical
         'kvasir_instrument_sem_seg_test': prepare_kvasir_instrument,
-        'isaid_sem_seg_train': prepare_isaid,
+        'isaid_sem_seg_train': prepare_isaid,  # remote sensing
         'isaid_sem_seg_val': prepare_isaid,
+        'deepcrack_sem_seg_train': prepare_deepcrack,
+        'deepcrack_sem_seg_test': prepare_deepcrack,  # geological
 
         # 'worldfloods_sem_seg_test_irrg': prepare_worldfloods,
         # 'paxray_sem_seg_test_lungs': prepare_paxray,
         # 'pst900_sem_seg_test': prepare_pst900,
-        # 'deepcrack_sem_seg_test': prepare_deepcrack,
         # 'cub_200_sem_seg_test': prepare_cub_200,
 
         # 'ndd20_sem_seg_test': prepare_ndd20,

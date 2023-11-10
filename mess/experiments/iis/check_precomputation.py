@@ -98,6 +98,8 @@ def main(mode, ds=None, describe=False):
         'kvasir_instrument_sem_seg_test',
         'isaid_sem_seg_train',  
         'isaid_sem_seg_val',  
+        'deepcrack_sem_seg_train',
+        'deepcrack_sem_seg_test',
         #'chase_db1_sem_seg_test', 'corrosion_cs_sem_seg_test', 'cryonuseg_sem_seg_test', 'cub_200_sem_seg_test',  'dark_zurich_sem_seg_val', 'deepcrack_sem_seg_test', 'dram_sem_seg_test', 
 
         # 'isaid_sem_seg_val', 
