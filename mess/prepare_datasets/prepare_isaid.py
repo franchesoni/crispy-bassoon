@@ -35,7 +35,7 @@ def download_dataset(ds_path):
     """
     print('Downloading dataset...')
     filesdir = ds_path / 'files'
-    filesdir.mkdir(exist_ok=True)
+    filesdir.mkdir(exist_ok=True, parents=True)
     (filesdir / 'val').mkdir(exist_ok=True)
     (filesdir / 'train').mkdir(exist_ok=True)
     # Download from Google Drive
@@ -44,19 +44,18 @@ def download_dataset(ds_path):
     gdown.download_folder(id='1jlVr4ClmeBA01IQYx7Aq3Scx2YS1Bmpb', output=str(filesdir / 'val'))
 
     # train images and masks
-    gdown.download_folder(id='1MvSH7sNaY4p4lhwAU_BG3y7zth6-rtrD', output=str(ds_path / 'train'))
-    gdown.download(id='1YLjZ1cmA9PH3OfzMF-eq6T-O9FTGvSrx', output=str(ds_path / 'train' / 'train_masks.zip'))
+    gdown.download_folder(id='1MvSH7sNaY4p4lhwAU_BG3y7zth6-rtrD', output=str(filesdir / 'train'))
+    gdown.download(id='1YLjZ1cmA9PH3OfzMF-eq6T-O9FTGvSrx', output=str(filesdir / 'train' / 'train_masks.zip'))
 
 def extract_dataset(ds_path):
     filesdir = ds_path / 'files'
     os.system(f'unzip {filesdir / "val" / "part1.zip"} -d {ds_path / "val_images"}')
     os.system(f'unzip {filesdir / "val" / "images.zip"} -d {ds_path / "val_masks"}')
-    os.system(f'rm {ds_path / "images.zip"}')
 
     os.system(f'unzip {filesdir / "train" / "part1.zip"} -d {ds_path / "train_images"}')
-    os.system(f'unzip {ds_path / "train" / "part2.zip"} -d {ds_path / "train_images"}')
-    os.system(f'unzip {ds_path / "train" / "part3.zip"} -d {ds_path / "train_images"}')
-    os.system(f'unzip {ds_path / "train" / "train_masks.zip"} -d {ds_path / "train_masks"}')
+    os.system(f'unzip {filesdir / "train" / "part2.zip"} -d {ds_path / "train_images"}')
+    os.system(f'unzip {filesdir / "train" / "part3.zip"} -d {ds_path / "train_images"}')
+    os.system(f'unzip {filesdir / "train" / "train_masks.zip"} -d {ds_path / "train_masks"}')
 
 
 def get_tiles(input, h_size=1024, w_size=1024, padding=0):
@@ -82,7 +81,6 @@ def get_tiles(input, h_size=1024, w_size=1024, padding=0):
 
 def prepare_isaid(ds_path):
     for split in ['train', 'val']:
-        assert (ds_path / f'raw_{split}').exists(), f'Raw {split} images not found in {ds_path / f"raw_{split}"}'
         # create directories
         img_dir = ds_path / 'images_detectron2' / split
         anno_dir = ds_path / 'annotations_detectron2' / split
@@ -97,7 +95,7 @@ def prepare_isaid(ds_path):
             if len(list(anno_dir.glob(f'{id}_*.png'))) > 0:
                 continue
             # Open image
-            img = Image.open(ds_path / split / 'images' / f'{id}.png')
+            img = Image.open(ds_path / f'{split}_images' / 'images' / f'{id}.png')
             # Open mask
             mask = np.array(Image.open(mask_path))
             # Map RGB values to class index by applying a lookup table
@@ -119,6 +117,7 @@ def prepare_isaid(ds_path):
 
 
 def main():
+    """You might need to manually download depending on the availability of the file."""
     dataset_dir = Path(os.getenv('DETECTRON2_DATASETS', 'datasets'))
     ds_path = dataset_dir / 'isaid'
     if not ds_path.exists():
@@ -126,6 +125,8 @@ def main():
         extract_dataset(ds_path)
 
     assert ds_path.exists(), f'Dataset not found in {ds_path}'
+
+    prepare_isaid(ds_path)
 
 if __name__ == '__main__':
     main()
