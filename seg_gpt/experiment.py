@@ -7,6 +7,7 @@ This code runs only for one seed. In order to run for multiple seeds, launch (if
 import os
 from config import datasets_path
 os.environ['DETECTRON2_DATASETS'] = str(datasets_path)
+from pathlib import Path
 import shutil
 import argparse
 import sys
@@ -29,7 +30,6 @@ from mess.datasets.TorchvisionDataset import TorchvisionDataset
 from seg_gpt.metrics import compute_global_metrics, compute_tps_fps_tns_fns
 
 # TODO: Adjust the maximum number of shots depending on GPU size. For a quick try, use as NUMBER_OF_SHOTS = [MAXIMUM_NUMBER] and check if there's no CUDA error
-NUMBER_OF_SHOTS = [4]#[i for i in range(1, 8)]
 CLASSES_TO_IGNORE = [
     "background",
     "others",
@@ -63,15 +63,17 @@ if __name__ == "__main__":
     parser.add_argument("--results-dir", required=True)
     parser.add_argument("--seed", type=int, default=0)
     parser.add_argument("--reset", action='store_true', help='if set, reset results dir')
+    parser.add_argument("--mem32gb", action='store_true', help='if set, use 32gb gpu ram and run the last number of shots')
 
     args = parser.parse_args()
 
     # Create results dir
+    results_dir = Path(args.results_dir) / args.test_dataset / ('seed_'+str(args.seed))
     try:
-        if args.reset and os.path.isdir(args.results_dir):
+        if args.reset and os.path.isdir(results_dir):
             print('resetting...')
             shutil.rmtree(args.results_dir)
-        os.makedirs(args.results_dir)
+        results_dir.mkdir(parents=True)
     except FileExistsError:
         raise FileExistsError(f"Results directory {args.results_dir} already exists.")
 
@@ -118,6 +120,7 @@ if __name__ == "__main__":
     np.random.seed(args.seed)
     # Iterate over all shots
     metrics_per_shot = {}
+    NUMBER_OF_SHOTS = [10, 20] if args.mem32gb else [1, 2, 4, 6]
     for shot in tqdm.tqdm(NUMBER_OF_SHOTS):
         print(f"Shot {shot}")
 
@@ -188,4 +191,4 @@ if __name__ == "__main__":
         metrics_per_shot[shot] = metrics_per_class
 
     # Save metrics
-    np.save(os.path.join(args.results_dir, "metrics.npy"), metrics_per_shot)
+    np.save(os.path.join(results_dir, "metrics.npy"), metrics_per_shot)
