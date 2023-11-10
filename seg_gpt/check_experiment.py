@@ -49,6 +49,7 @@ def get_class_img_mapping(dataset: TorchvisionDataset, values_to_ignore: T.List)
 
 
 if __name__ == "__main__":
+    print('%'*160)
     # Parse arguments
     parser = argparse.ArgumentParser()
     parser.add_argument("--results-dir", required=True)
@@ -79,12 +80,13 @@ if __name__ == "__main__":
     for train_dataset, test_dataset in DATASETS:
         print('='*30)
         print(f"Train dataset: {train_dataset}, test dataset: {test_dataset}")
-        seed_dirs = os.listdir(Path(args.results_dir) / args.test_dataset)
+        seed_dirs = os.listdir(Path(args.results_dir) / test_dataset)
+        print('seeds:', seed_dirs)
         for seed in seed_dirs:
             print('-'*20)
             print(f"Seed: {seed}")
             # Create results dir
-            results_dir =  Path(args.results_dir) / args.test_dataset / seed
+            results_dir =  Path(args.results_dir) / test_dataset / seed
 
             # Try to load existing results if not resetting
             if os.path.isfile(os.path.join(results_dir, "metrics.npy")):
