@@ -92,7 +92,7 @@ def prepare_isaid(ds_path):
         for mask_path in tqdm.tqdm(sorted((ds_path / f'{split}_masks' / 'images').glob('*.png'))):
             file = mask_path.name
             id = file.split('_')[0]
-            if len(list(anno_dir.glob(f'{id}_*.png'))) > 0:
+            if len(list(anno_dir.glob(f'{id}_*.png'))) and len(list(img_dir.glob(f'{id}_*.png'))):
                 continue
             # Open image
             img = Image.open(ds_path / f'{split}_images' / 'images' / f'{id}.png')

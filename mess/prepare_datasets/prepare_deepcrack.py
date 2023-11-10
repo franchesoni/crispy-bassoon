@@ -32,7 +32,7 @@ def main():
 
     assert ds_path.exists(), f'Dataset not found in {ds_path}'
 
-    for split in ['train' 'test']:
+    for split in ['train', 'test']:
         # create directory
         anno_dir = ds_path / 'annotations_detectron2' / split
         os.makedirs(anno_dir, exist_ok=True)
