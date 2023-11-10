@@ -63,7 +63,6 @@ if __name__ == "__main__":
     parser.add_argument("--results-dir", required=True)
     parser.add_argument("--seed", type=int, default=0)
     parser.add_argument("--reset", action='store_true', help='if set, reset results dir')
-    parser.add_argument("--resume", action='store_false', help='if set, resume run')
     parser.add_argument("--mem32gb", action='store_true', help='if set, use 32gb gpu ram and run the last number of shots')
 
     args = parser.parse_args()
@@ -76,8 +75,13 @@ if __name__ == "__main__":
             shutil.rmtree(args.results_dir)
         results_dir.mkdir(parents=True)
     except FileExistsError:
-        if not args.resume:
-            raise FileExistsError(f"Results directory {args.results_dir} already exists.")
+        print(f"Results directory {args.results_dir} already exists, resuming...")
+
+    # Try to load existing results if not resetting
+    if not args.reset and os.path.isfile(os.path.join(results_dir, "metrics.npy")):
+        metrics_per_shot = np.load(os.path.join(results_dir, "metrics.npy"), allow_pickle=True).item()
+    else:
+        metrics_per_shot = {}
 
     # Prepare model
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -126,10 +130,17 @@ if __name__ == "__main__":
     for shot in tqdm.tqdm(NUMBER_OF_SHOTS):
         print(f"Shot {shot}")
 
+        if shot in metrics_per_shot:
+            metrics_per_class = metrics_per_shot[shot]
+        else:
+            metrics_per_class = {}
         # Iterate over all classes
-        metrics_per_class = {}
         for class_ind in tqdm.tqdm(list(class_img_mapping.keys())):
             print(f"Class {class_ind} ({class_names[class_ind]})")
+
+            if class_ind in metrics_per_class:
+                print(f"Shot {shot} class {class_ind} already computed, skipping...")
+                continue
 
             # Skip if not enough images
             if len(class_img_mapping[class_ind]) < shot:
@@ -189,8 +200,10 @@ if __name__ == "__main__":
 
             # Store metrics
             metrics_per_class[class_ind] = metrics_per_image
-        # Store metrics
-        metrics_per_shot[shot] = metrics_per_class
 
-    # Save metrics
-    np.save(os.path.join(results_dir, "metrics.npy"), metrics_per_shot)
+            # save intermediate after each class is computed
+            # Store metrics
+            metrics_per_shot[shot] = metrics_per_class
+            # Save metrics
+            np.save(os.path.join(results_dir, "metrics.npy"), metrics_per_shot)
+
