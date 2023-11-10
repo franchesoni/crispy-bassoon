@@ -3,9 +3,11 @@ Main loop to run the experiment of how SEG-GPT performance changes with the numb
 This code runs only for one seed. In order to run for multiple seeds, launch (if possible parallel) multiple instances of this script with different seeds.
 """
 # set detectron datasets, you're supposed to run this from crispy-bassoon
+# and you're also supposed to run this using python -m seg_gpt.experiment
 import os
 from config import datasets_path
 os.environ['DETECTRON2_DATASETS'] = str(datasets_path)
+import shutil
 import argparse
 import sys
 import tempfile
@@ -27,7 +29,7 @@ from mess.datasets.TorchvisionDataset import TorchvisionDataset
 from seg_gpt.metrics import compute_global_metrics, compute_tps_fps_tns_fns
 
 # TODO: Adjust the maximum number of shots depending on GPU size. For a quick try, use as NUMBER_OF_SHOTS = [MAXIMUM_NUMBER] and check if there's no CUDA error
-NUMBER_OF_SHOTS = [i for i in range(1, 8)]
+NUMBER_OF_SHOTS = [4]#[i for i in range(1, 8)]
 CLASSES_TO_IGNORE = [
     "background",
     "others",
@@ -41,8 +43,9 @@ def get_class_img_mapping(dataset: TorchvisionDataset, values_to_ignore: T.List)
     """
     Returns a mapping that stores which images are available for each class.
     """
+    print('getting class img mapping...')
     class_img_mapping = {}
-    for ix, (_, mask) in enumerate(dataset):
+    for ix, (_, mask) in tqdm.tqdm(enumerate(dataset), total=len(dataset)):
         for value in np.unique(mask):
             if value in values_to_ignore:
                 continue
@@ -59,11 +62,15 @@ if __name__ == "__main__":
     parser.add_argument("--test-dataset", default="foodseg103_sem_seg_test")
     parser.add_argument("--results-dir", required=True)
     parser.add_argument("--seed", type=int, default=0)
+    parser.add_argument("--reset", action='store_true', help='if set, reset results dir')
 
     args = parser.parse_args()
 
     # Create results dir
     try:
+        if args.reset and os.path.isdir(args.results_dir):
+            print('resetting...')
+            shutil.rmtree(args.results_dir)
         os.makedirs(args.results_dir)
     except FileExistsError:
         raise FileExistsError(f"Results directory {args.results_dir} already exists.")
@@ -73,7 +80,7 @@ if __name__ == "__main__":
     model = getattr(models_seggpt, "seggpt_vit_large_patch16_input896x448")()
     model.seg_type = "instance"
     checkpoint = torch.load(
-        "Painter/SegGPT/SegGPT_inference/seggpt_vit_large.pth"
+        "seg_gpt/Painter/SegGPT/SegGPT_inference/seggpt_vit_large.pth"
     )
     _ = model.load_state_dict(checkpoint["model"], strict=False)
     model.eval()
