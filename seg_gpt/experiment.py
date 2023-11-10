@@ -63,6 +63,7 @@ if __name__ == "__main__":
     parser.add_argument("--results-dir", required=True)
     parser.add_argument("--seed", type=int, default=0)
     parser.add_argument("--reset", action='store_true', help='if set, reset results dir')
+    parser.add_argument("--resume", action='store_false', help='if set, resume run')
     parser.add_argument("--mem32gb", action='store_true', help='if set, use 32gb gpu ram and run the last number of shots')
 
     args = parser.parse_args()
@@ -75,7 +76,8 @@ if __name__ == "__main__":
             shutil.rmtree(args.results_dir)
         results_dir.mkdir(parents=True)
     except FileExistsError:
-        raise FileExistsError(f"Results directory {args.results_dir} already exists.")
+        if not args.resume:
+            raise FileExistsError(f"Results directory {args.results_dir} already exists.")
 
     # Prepare model
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
