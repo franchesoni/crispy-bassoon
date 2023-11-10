@@ -34,16 +34,29 @@ def download_dataset(ds_path):
     Downloads the dataset
     """
     print('Downloading dataset...')
+    filesdir = ds_path / 'files'
+    filesdir.mkdir(exist_ok=True)
+    (filesdir / 'val').mkdir(exist_ok=True)
+    (filesdir / 'train').mkdir(exist_ok=True)
     # Download from Google Drive
     # Download val images https://drive.google.com/drive/folders/1RV7Z5MM4nJJJPUs6m9wsxDOJxX6HmQqZ?usp=share_link4
-    gdown.download_folder(id='1RV7Z5MM4nJJJPUs6m9wsxDOJxX6HmQqZ', output=str(ds_path))
-    os.system(f'unzip {ds_path / "part1.zip"} -d {ds_path / "val"}')
-    os.system(f'rm {ds_path / "part1.zip"}')
+    gdown.download_folder(id='1RV7Z5MM4nJJJPUs6m9wsxDOJxX6HmQqZ', output=str(filesdir / 'val'))
+    gdown.download_folder(id='1jlVr4ClmeBA01IQYx7Aq3Scx2YS1Bmpb', output=str(filesdir / 'val'))
 
-    # Download val mask https://drive.google.com/drive/folders/1jlVr4ClmeBA01IQYx7Aq3Scx2YS1Bmpb
-    gdown.download_folder(id='1jlVr4ClmeBA01IQYx7Aq3Scx2YS1Bmpb', output=str(ds_path))
-    os.system(f'unzip {ds_path / "images.zip"} -d {ds_path / "raw_val"}')
+    # train images and masks
+    gdown.download_folder(id='1MvSH7sNaY4p4lhwAU_BG3y7zth6-rtrD', output=str(ds_path / 'train'))
+    gdown.download(id='1YLjZ1cmA9PH3OfzMF-eq6T-O9FTGvSrx', output=str(ds_path / 'train' / 'train_masks.zip'))
+
+def extract_dataset(ds_path):
+    filesdir = ds_path / 'files'
+    os.system(f'unzip {filesdir / "val" / "part1.zip"} -d {ds_path / "val_images"}')
+    os.system(f'unzip {filesdir / "val" / "images.zip"} -d {ds_path / "val_masks"}')
     os.system(f'rm {ds_path / "images.zip"}')
+
+    os.system(f'unzip {filesdir / "train" / "part1.zip"} -d {ds_path / "train_images"}')
+    os.system(f'unzip {ds_path / "train" / "part2.zip"} -d {ds_path / "train_images"}')
+    os.system(f'unzip {ds_path / "train" / "part3.zip"} -d {ds_path / "train_images"}')
+    os.system(f'unzip {ds_path / "train" / "train_masks.zip"} -d {ds_path / "train_masks"}')
 
 
 def get_tiles(input, h_size=1024, w_size=1024, padding=0):
@@ -67,16 +80,8 @@ def get_tiles(input, h_size=1024, w_size=1024, padding=0):
                 tiles.append(padded_tile)
     return tiles
 
-
-def main():
-    dataset_dir = Path(os.getenv('DETECTRON2_DATASETS', 'datasets'))
-    ds_path = dataset_dir / 'isaid'
-    if not ds_path.exists():
-        download_dataset(ds_path)
-
-    assert ds_path.exists(), f'Dataset not found in {ds_path}'
-
-    for split in ['val']:
+def prepare_isaid(ds_path):
+    for split in ['train', 'val']:
         assert (ds_path / f'raw_{split}').exists(), f'Raw {split} images not found in {ds_path / f"raw_{split}"}'
         # create directories
         img_dir = ds_path / 'images_detectron2' / split
@@ -85,9 +90,12 @@ def main():
         os.makedirs(anno_dir, exist_ok=True)
 
         # Convert annotations to detectron2 format
-        for mask_path in tqdm.tqdm(sorted((ds_path / f'raw_{split}' / 'images').glob('*.png'))):
+        # for mask_path in tqdm.tqdm(sorted((ds_path / f'raw_{split}' / 'images').glob('*.png'))):
+        for mask_path in tqdm.tqdm(sorted((ds_path / f'{split}_masks' / 'images').glob('*.png'))):
             file = mask_path.name
             id = file.split('_')[0]
+            if len(list(anno_dir.glob(f'{id}_*.png'))) > 0:
+                continue
             # Open image
             img = Image.open(ds_path / split / 'images' / f'{id}.png')
             # Open mask
@@ -107,6 +115,17 @@ def main():
 
         print(f'Saved {split} images and masks of {ds_path.name} dataset')
 
+
+
+
+def main():
+    dataset_dir = Path(os.getenv('DETECTRON2_DATASETS', 'datasets'))
+    ds_path = dataset_dir / 'isaid'
+    if not ds_path.exists():
+        download_dataset(ds_path)
+        extract_dataset(ds_path)
+
+    assert ds_path.exists(), f'Dataset not found in {ds_path}'
 
 if __name__ == '__main__':
     main()

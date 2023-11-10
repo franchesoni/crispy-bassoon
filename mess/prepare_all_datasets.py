@@ -40,8 +40,8 @@ if __name__ == '__main__':
     # prepare datasets
     dataset_dict = {
         'mhp_v1_sem_seg_test': prepare_mhp_v1,
-        'foodseg103_sem_seg_test': prepare_foodseg,
         'mhp_v1_sem_seg_train': prepare_mhp_v1,
+        'foodseg103_sem_seg_test': prepare_foodseg,
         'foodseg103_sem_seg_train': prepare_foodseg,
         'suim_sem_seg_train': prepare_suim,
         'suim_sem_seg_test': prepare_suim,
@@ -55,8 +55,9 @@ if __name__ == '__main__':
         'cwfid_sem_seg_test': prepare_cwfid,
         'kvasir_instrument_sem_seg_train': prepare_kvasir_instrument,
         'kvasir_instrument_sem_seg_test': prepare_kvasir_instrument,
+        'isaid_sem_seg_train': prepare_isaid,
+        'isaid_sem_seg_val': prepare_isaid,
 
-        # 'isaid_sem_seg_val': prepare_isaid,
         # 'worldfloods_sem_seg_test_irrg': prepare_worldfloods,
         # 'paxray_sem_seg_test_lungs': prepare_paxray,
         # 'pst900_sem_seg_test': prepare_pst900,

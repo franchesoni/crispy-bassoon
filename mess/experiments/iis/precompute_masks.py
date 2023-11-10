@@ -164,8 +164,9 @@ def main(mode, dev=False, ds=None):
             'cwfid_sem_seg_test',
             'kvasir_instrument_sem_seg_train',
             'kvasir_instrument_sem_seg_test',
+            'isaid_sem_seg_train',  
+            'isaid_sem_seg_val',  
            # 'atlantis_sem_seg_test', 'chase_db1_sem_seg_test', 'cryonuseg_sem_seg_test', 'cub_200_sem_seg_test', 'dark_zurich_sem_seg_val', 'deepcrack_sem_seg_test', 'dram_sem_seg_test', 
-           # 'isaid_sem_seg_val',  
            # 'paxray_sem_seg_test_bones', 'paxray_sem_seg_test_diaphragm', 'paxray_sem_seg_test_lungs', 'paxray_sem_seg_test_mediastinum', 'pst900_sem_seg_test', 'worldfloods_sem_seg_test_irrg', 'ndd20_sem_seg_test', 'mypascalvoc_sem_seg_test', 'mysbd_sem_seg_test', 'mygrabcut_sem_seg_test'
            ]
     assert (ds is None) or ds in DATASETS 

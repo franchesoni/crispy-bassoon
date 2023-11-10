@@ -96,6 +96,8 @@ def main(mode, ds=None, describe=False):
         'atlantis_sem_seg_test',
         'cwfid_sem_seg_test',
         'kvasir_instrument_sem_seg_test',
+        'isaid_sem_seg_train',  
+        'isaid_sem_seg_val',  
         #'chase_db1_sem_seg_test', 'corrosion_cs_sem_seg_test', 'cryonuseg_sem_seg_test', 'cub_200_sem_seg_test',  'dark_zurich_sem_seg_val', 'deepcrack_sem_seg_test', 'dram_sem_seg_test', 
 
         # 'isaid_sem_seg_val', 
