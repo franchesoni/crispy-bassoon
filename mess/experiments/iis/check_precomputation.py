@@ -76,7 +76,7 @@ def describe_show_found(ds_names):
 
 
 def main(mode, ds=None, describe=False):
-    assert mode in ['sam', 'dino', 'sam_embeddings']
+    assert mode in ['sam', 'dino', 'sam_embeddings', 'dinosam']
     ds_names = get_detectron2_datasets()
     # classes to ignore:
     # others, background, unlabeled, 'background (waterbody)', 'background or trash'

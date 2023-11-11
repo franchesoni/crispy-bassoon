@@ -61,21 +61,17 @@ def precompute_for_dataset(torchvision_dataset, dstdir, mode, reset=False, dev=F
             if dstfile.exists() and not overwrite:
                 continue
             # handle sam masks
-            sammasks_dstfile = dstdir / f'sam_masks_{str(i).zfill(ndigits)}.npy'
+            sammasks_dstfile = dstdir.parent / 'sam' / f'sam_masks_{str(i).zfill(ndigits)}.npy'
             if sammasks_dstfile.exists() and not overwrite:  # laod existing masks
                 sam_masks = np.load(sammasks_dstfile, allow_pickle=True)
-            else:  # compute and save masks
-                img, mask = torchvision_dataset[i]
-                sam_masks = extract_masks_single(img)
-                np.save(sammasks_dstfile, sam_masks)
+            else:
+                raise RuntimeError('you should precompute masks')
             # handle dino features
-            feats_dstfile = dstdir / f'dinosamfeats_{str(i).zfill(ndigits)}.npy'
+            feats_dstfile = dstdir.parent / 'dino' / f'img_features_{str(i).zfill(ndigits)}.npy'
             if feats_dstfile.exists() and not overwrite:
                 img_features = np.load(feats_dstfile, allow_pickle=True)
             else:
-                img, mask = torchvision_dataset[i]  # maybe repeated, but it's ok
-                img_features = compute_features_list([img])[0]
-                np.save(feats_dstfile, img_features)
+                raise RuntimeError('you should precompute features')
             # combine
             dinosam_feats = project_masks(sam_masks, img_features)
             np.save(dstfile, dinosam_feats)
