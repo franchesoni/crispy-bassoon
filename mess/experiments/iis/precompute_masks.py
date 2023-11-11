@@ -7,13 +7,14 @@ import shutil
 import cProfile
 import numpy as np
 import torch
+import time
 from PIL import Image
 import cv2
 
 from IISS.extract_masks import extract_masks_single, get_embedding_sam
 from IISS.compute_features import compute_features_list
 from mess.datasets.TorchvisionDataset import TorchvisionDataset, get_detectron2_datasets
-from IISS.project_masks import project_masks
+from IISS.project_masks import project_masks, project_masks_faster
 
 
 def precompute_for_dataset(torchvision_dataset, dstdir, mode, reset=False, dev=False, overwrite=False, return_if_dir_exists=True):
@@ -73,7 +74,11 @@ def precompute_for_dataset(torchvision_dataset, dstdir, mode, reset=False, dev=F
             else:
                 raise RuntimeError('you should precompute features')
             # combine
-            dinosam_feats = project_masks(sam_masks, img_features)
+            # st = time.time()
+            # dinosam_feats = project_masks(sam_masks, img_features)
+            # print('project_masks took', time.time() - st, 'seconds')
+            # st = time.time()
+            dinosam_feats = project_masks_faster(sam_masks, img_features)
             np.save(dstfile, dinosam_feats)
         if mode == 'dino':
             dstfile = dstdir / f'img_features_{str(i).zfill(ndigits)}.npy'
