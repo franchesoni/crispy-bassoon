@@ -124,7 +124,6 @@ if __name__ == "__main__":
 
 
     # Iterate over all shots
-    metrics_per_shot = {}
     NUMBER_OF_SHOTS = [10, 20] if args.mem32gb else [1, 2, 4, 6]
     for shot in tqdm.tqdm(NUMBER_OF_SHOTS):
         print(f"Shot {shot}")
