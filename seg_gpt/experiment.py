@@ -122,8 +122,7 @@ if __name__ == "__main__":
     class_img_mapping = get_class_img_mapping(train_ds, values_to_ignore)
     test_class_img_mapping = get_class_img_mapping(test_ds, values_to_ignore)
 
-    # Set random seed
-    np.random.seed(args.seed)
+
     # Iterate over all shots
     metrics_per_shot = {}
     NUMBER_OF_SHOTS = [10, 20] if args.mem32gb else [1, 2, 4, 6]
@@ -158,6 +157,8 @@ if __name__ == "__main__":
                     test_mask = test_masks == class_ind
                     Image.fromarray(test_img).save(f"{tmpdir}/query.png")
 
+                    # Set random seed
+                    np.random.seed(args.seed)
                     # Get support images and masks
                     support_img_inds = np.random.choice(
                         class_img_mapping[class_ind], size=shot, replace=False
