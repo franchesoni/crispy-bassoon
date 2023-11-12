@@ -54,7 +54,6 @@ def visualize(img, class_mask, pred, clicks):
 
     # visualize
     plt.imsave("tmp/current.png", bigimg)
-    breakpoint()
     return bigimg
 
 
@@ -167,16 +166,18 @@ def main(precomputed_dir, dstdir, ds_name, seed):
         ds_indices = np.arange(len(ds))
 
     # start looping over classes
-    metrics_after_per_class = {}
-    metrics_before_per_class = {}
-    sample_inds_per_class = {}
-
     if not (dstdir / f'results_seed_{seed}.json').exists():
         resuming = False
+        metrics_after_per_class = {}
+        metrics_before_per_class = {}
+        sample_inds_per_class = {}
     else:
         with open(dstdir / f'results_seed_{seed}.json', 'r') as f:
             res = f.read()
         res = ast.literal_eval(res.replace('tensor', ''))
+        metrics_after_per_class = res['metrics_after']
+        metrics_before_per_class = res['metrics_before']
+        sample_inds_per_class = res['sample_inds']
         resuming = True
 
 
