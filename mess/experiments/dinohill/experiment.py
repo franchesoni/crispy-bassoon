@@ -76,9 +76,11 @@ def get_click_vector(feat_map, click):
 def get_corrective_click(sample_ind, pred, ds_gt_mask):
     # get the click that corrects the worst prediction. Because the gound truth is downsampled it should have values in [0, 1] corresponding to the overlap of each patch with the hr gt_mask. We then just compute the maximum absolute error between pred (binary) and ds_gt_mask.
     errors = np.abs(1*pred - norm(ds_gt_mask))
+    if errors.max() == 0:
+        return None
     max_errors = np.array(errors == errors.max())
     while True:
-        eroded_max_errors = cv2.erode((255*max_errors).astype(np.uint8), np.ones((3, 3)))
+        eroded_max_errors = cv2.erode(max_errors.astype(np.uint8), np.ones((3, 3)))
         if eroded_max_errors.sum() == 0:
             break
         else:
