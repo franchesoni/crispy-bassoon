@@ -176,11 +176,17 @@ def main(precomputed_dir, dstdir, ds_name, seed):
     else:
         with open(dstdir / f'results_seed_{seed}.json', 'r') as f:
             res = f.read()
-        res = eval(res.replace('tensor', '').replace('nan', "float('nan')"))
-        metrics_after_per_class = res['metrics_after']
-        metrics_before_per_class = res['metrics_before']
-        sample_inds_per_class = res['sample_inds']
-        resuming = True
+        if res == '':
+            resuming = False
+            metrics_after_per_class = {}
+            metrics_before_per_class = {}
+            sample_inds_per_class = {}
+        else:
+            res = eval(res.replace('tensor', '').replace('nan', "float('nan')"))
+            metrics_after_per_class = res['metrics_after']
+            metrics_before_per_class = res['metrics_before']
+            sample_inds_per_class = res['sample_inds']
+            resuming = True
 
 
 
@@ -194,7 +200,8 @@ def main(precomputed_dir, dstdir, ds_name, seed):
     for class_ind, class_name in zip(class_indices, class_names):
         if class_ind in values_to_ignore:
             continue
-        if resuming and class_ind in res['metrics_after']:
+        friendly_class_name = class_name.replace(' ', '_').replace('/', '-')
+        if resuming and (class_name in res['metrics_after'] or friendly_class_name in res['metrics_after']):
             print('skipping class', class_name)
             continue
         print("running class", class_name)
@@ -274,9 +281,9 @@ def main(precomputed_dir, dstdir, ds_name, seed):
             ds_indices_ind += 1
 
 
-            metrics_after_per_class[class_name] = metrics_after
-            metrics_before_per_class[class_name] = metrics_before
-            sample_inds_per_class[class_name] = sample_inds
+            metrics_after_per_class[friendly_class_name] = metrics_after
+            metrics_before_per_class[friendly_class_name] = metrics_before
+            sample_inds_per_class[friendly_class_name] = sample_inds
             res = {
                 "metrics_after": metrics_after_per_class,
                 "metrics_before": metrics_before_per_class,
@@ -284,8 +291,8 @@ def main(precomputed_dir, dstdir, ds_name, seed):
             }
         with open(dstdir / f'results_seed_{seed}.json', 'w') as f:
                 f.write(str(res).replace("'", '"'))
-        np.save(dstdir / f"clicks_so_far_{class_name}_seed_{seed}.npy", clicks_so_far,)
-        np.save(dstdir / f"seed_vectors_{class_name}_seed_{seed}.npy", seed_vectors, )
+        np.save(dstdir / f"clicks_so_far_{friendly_class_name}_seed_{seed}.npy", clicks_so_far,)
+        np.save(dstdir / f"seed_vectors_{friendly_class_name}_seed_{seed}.npy", seed_vectors, )
 
 
 if __name__ == "__main__":
