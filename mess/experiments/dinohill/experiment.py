@@ -176,7 +176,7 @@ def main(precomputed_dir, dstdir, ds_name, seed):
     else:
         with open(dstdir / f'results_seed_{seed}.json', 'r') as f:
             res = f.read()
-        res = ast.literal_eval(res.replace('tensor', ''))
+        res = eval(res.replace('tensor', '').replace('nan', "float('nan')"))
         metrics_after_per_class = res['metrics_after']
         metrics_before_per_class = res['metrics_before']
         sample_inds_per_class = res['sample_inds']
